@@ -1,0 +1,40 @@
+name: Publish showcase player
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - '.github/workflows/showcase.yml'
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Prepare player site
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p public
+          cp site/index.html public/index.html
+          gh release download v0.1.0 --repo "${GITHUB_REPOSITORY}" --pattern 'Aether-showcase-with-text.mp4' --dir public
+          du -h public/Aether-showcase-with-text.mp4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10110f">
+  <title>Aether — Showcase</title>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; background: #10110f; color: #f4f3ee; }
+    * { box-sizing: border-box; }
+    body { min-height: 100vh; margin: 0; display: grid; place-items: center; padding: 40px 22px; background: radial-gradient(ellipse at 50% 0%, #252820 0, #10110f 56%); }
+    main { width: min(1080px, 100%); }
+    header { display: flex; justify-content: space-between; align-items: center; margin: 0 2px 20px; gap: 20px; }
+    a { color: #c8d8a1; text-decoration: none; } a:hover { color: white; }
+    .wordmark { color: #f4f3ee; font-size: 14px; letter-spacing: .18em; text-transform: uppercase; }
+    .back { font-size: 13px; color: #c2c3bb; }
+    .frame { overflow: hidden; border: 1px solid #ffffff20; border-radius: 18px; background: #000; box-shadow: 0 32px 100px #0009; }
+    video { width: 100%; display: block; aspect-ratio: 16 / 9; background: #000; }
+    section { display: flex; justify-content: space-between; align-items: baseline; gap: 20px; padding: 21px 3px 0; }
+    h1 { font-weight: 500; font-size: clamp(20px, 3vw, 29px); letter-spacing: -.035em; margin: 0; }
+    p { color: #a6a79f; font-size: 13px; margin: 8px 0 0; }
+    .download { white-space: nowrap; font-size: 13px; }
+    @media (max-width: 560px) { body { padding: 22px 14px; } header { margin-bottom: 14px; } .frame { border-radius: 12px; } section { display: block; } .download { display: inline-block; margin-top: 14px; } }
+  </style>
+</head>
+<body>
+  <main>
+    <header><a class="wordmark" href="https://github.com/0xQuerencia/aether">Aether</a><a class="back" href="https://github.com/0xQuerencia/aether">Back to the rice ↗</a></header>
+    <div class="frame"><video controls playsinline preload="metadata" poster="https://raw.githubusercontent.com/0xQuerencia/aether/main/media/showcase.jpg"><source src="Aether-showcase-with-text.mp4" type="video/mp4">Your browser does not support HTML video. <a href="https://github.com/0xQuerencia/aether/releases/download/v0.1.0/Aether-showcase-with-text.mp4">Download the showcase</a>.</video></div>
+    <section><div><h1>A look around my Aether setup.</h1><p>Full desktop tour · 5 minutes</p></div><a class="download" href="https://github.com/0xQuerencia/aether/releases/download/v0.1.0/Aether-showcase-with-text.mp4" download>Download video ↓</a></section>
+  </main>
+</body>
+</html>

@@ -2,9 +2,9 @@
 
 My Hyprland shell. The clock stays in the middle, the current app sits on the left, and minimized windows live on the right. Everything opens out of the same island.
 
-[![Aether showcase](media/showcase.jpg)](https://github.com/0xQuerencia/aether/releases/download/v0.1.0/Aether-showcase-with-text.mp4)
+[![Aether showcase](media/showcase.jpg)](https://0xquerencia.github.io/aether/)
 
-**[Watch the full showcase](https://github.com/0xQuerencia/aether/releases/download/v0.1.0/Aether-showcase-with-text.mp4)** · [Download](https://github.com/0xQuerencia/aether/releases/latest) · [Setup guide](docs/SETUP.md)
+**[Watch the full showcase](https://0xquerencia.github.io/aether/)** · [Download the video](https://github.com/0xQuerencia/aether/releases/download/v0.1.0/Aether-showcase-with-text.mp4) · [Setup guide](docs/SETUP.md)
 
 A few private details are covered in the video. It shows my desktop; the installer adds the shell to yours. Your monitor setup, terminal and prompt stay as they are.
 
