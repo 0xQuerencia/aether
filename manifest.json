@@ -324,7 +324,7 @@
     "mode": "0o644"
   },
   "payload/shell/applauncher/launcher_query.py": {
-    "sha256": "78934b2edfaaf4015c8e0a6d3117a93cc3258951d5091462314bf97d0c256006",
+    "sha256": "fe80e4c518e4c6fad0f12d3a8463914f70344d0f2d511d8005fc817cfb035f71",
     "mode": "0o644"
   },
   "payload/shell/assets/headphones/SOURCES.md": {
@@ -456,7 +456,7 @@
     "mode": "0o644"
   },
   "payload/shell/panels/LauncherPanel.qml": {
-    "sha256": "7ab54c58f9e8a998a365ad15f75152d36a770aefc57afbf375961235ef56eab3",
+    "sha256": "da7ea960969bdd5eea5f5f63f3374b89ee2ffe29355689a1f295ed5b719bc6bb",
     "mode": "0o644"
   },
   "payload/shell/panels/MediaPanel.qml": {

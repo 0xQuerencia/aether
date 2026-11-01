@@ -74,7 +74,7 @@ ColumnLayout {
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: searchInput.text === ""
-                text: "Search apps · = calculate · > command · # clipboard"
+                text: "Search apps · 2+2 calculate · > command · # clipboard"
                 font: searchInput.font; color: subtitleColor
             }
         }

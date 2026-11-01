@@ -37,14 +37,16 @@ def calculate(expression):
  return format(visit(tree.body),'.12g')
 def row(name,payload,icon='',kind='app',detail=''):
  return dict(name=name,exec=payload,icon=icon,kind=kind,detail=detail)
+def is_calculation(q):
+ return bool(re.fullmatch(r'[0-9.eE+*/%()^\-\s]+',q) and re.search(r'[+*/%^]|(?<!^)-',q))
 def query(text):
  q=text.strip()
  if q.startswith('>'):
   cmd=q[1:].strip()
   return [row(cmd,cmd,'utilities-terminal','command','Run command')] if cmd else []
- if q.startswith('='):
+ if q.startswith('=') or is_calculation(q):
   try:
-   answer=calculate(q[1:].strip()); return [row(answer,answer,'accessories-calculator','copy','Enter to copy result')]
+   answer=calculate(q[1:].strip() if q.startswith('=') else q); return [row(answer,answer,'accessories-calculator','copy','Enter to copy result')]
   except (ValueError,SyntaxError,ZeroDivisionError,OverflowError): return []
  if q.startswith('#'):
   proc=subprocess.run(['cliphist','list'],capture_output=True,text=True,timeout=3,check=True)
