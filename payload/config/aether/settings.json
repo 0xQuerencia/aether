@@ -1,0 +1,8 @@
+{
+  "openGuideAtStartup": false,
+  "topbarHelpIcon": false,
+  "wallpaperDir": "@HOME@/.local/share/aether/wallpapers",
+  "language": "en",
+  "workspaceCount": 6,
+  "uiScale": 1
+}

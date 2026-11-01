@@ -1,0 +1,58 @@
+singleton SysData 1.0 SysData.qml
+singleton Notifs 1.0 Notifs.qml
+Caching 1.0 Caching.qml
+Island 1.0 Island.qml
+Lock 1.0 Lock.qml
+MatugenColors 1.0 MatugenColors.qml
+Scaler 1.0 Scaler.qml
+ScreenshotOverlay 1.0 ScreenshotOverlay.qml
+Shell 1.0 Shell.qml
+PowerOverlay 1.0 PowerOverlay.qml
+PixelIcon 1.0 PixelIcon.qml
+WorkspaceOverview 1.0 WorkspaceOverview.qml
+singleton Prefs 1.0 Prefs.qml
+SettingsWindow 1.0 SettingsWindow.qml
+TaskManager 1.0 TaskManager.qml
+
+OriginalIsland 1.0 OriginalIsland.qml
+
+LockView 1.0 LockView.qml
+LockPreview 1.0 LockPreview.qml
+
+singleton IslandRegistry 1.0 IslandRegistry.qml
+
+singleton AetherStyle 1.0 AetherStyle.qml
+
+PalettePicker 1.0 PalettePicker.qml
+
+singleton Tasks 1.0 Tasks.qml
+
+singleton Pins 1.0 Pins.qml
+ScreenPins 1.0 ScreenPins.qml
+
+PanelReveal 1.0 PanelReveal.qml
+
+PressScale 1.0 PressScale.qml
+
+AetherButton 1.0 AetherButton.qml
+AetherField 1.0 AetherField.qml
+
+AetherMessage 1.0 AetherMessage.qml
+
+singleton LiveActivities 1.0 LiveActivities.qml
+
+HeadphoneProduct 1.0 HeadphoneProduct.qml
+
+BatteryToastPanel 1.0 BatteryToastPanel.qml
+
+singleton Continuity 1.0 Continuity.qml
+
+FlipTile 1.0 FlipTile.qml
+
+singleton FoldedWindows 1.0 FoldedWindows.qml
+
+MinimizedDock 1.0 MinimizedDock.qml
+
+IslandAppTail 1.0 IslandAppTail.qml
+
+singleton Displays 1.0 Displays.qml

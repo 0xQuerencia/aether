@@ -1,0 +1,197 @@
+#!/usr/bin/env python3
+"""Aether display layouts, remembered external screens, and timed rollback."""
+import argparse
+import fcntl
+import json
+import math
+import os
+from pathlib import Path
+import re
+import secrets
+import subprocess
+import sys
+import time
+
+STATE=Path(os.environ.get('XDG_STATE_HOME',Path.home()/'.local/state'))/'aether/displays'
+SESSION=os.environ.get('HYPRLAND_INSTANCE_SIGNATURE','')
+SCALES=[1,1.25,1.5,1.75,2]
+
+def ctl(*args):
+    p=subprocess.run(['hyprctl',*args],capture_output=True,text=True,timeout=5)
+    if p.returncode or p.stdout.lower().startswith(('error','invalid')):raise RuntimeError(p.stderr.strip() or p.stdout.strip())
+    return p.stdout.strip()
+
+def monitors():return json.loads(ctl('-j','monitors','all'))
+def read(name,default):
+    try:return json.loads((STATE/name).read_text())
+    except (OSError,ValueError):return default
+
+def write(name,data):
+    path=STATE/name;temp=path.with_suffix('.tmp')
+    temp.write_text(json.dumps(data));temp.chmod(0o600);temp.replace(path)
+
+def pending():
+    p=read('preview.json',{})
+    return p if p.get('session')==SESSION else {}
+
+def name_ok(name):
+    if not isinstance(name,str) or not re.fullmatch(r'[a-zA-Z0-9_.:-]{1,100}',name):raise ValueError('Invalid display name')
+    return name
+
+def identity(m):return '|'.join(str(m.get(k,'')) for k in ['name','make','model','serial','description'])
+def internal(m):return m['name'].startswith(('eDP','LVDS','DSI'))
+def current_spec(m,all_monitors=None):
+    mirror=m.get('mirrorOf')
+    if mirror in ('none',None):mirror=''
+    elif str(mirror).isdigit() and all_monitors:
+        mirror=next((other['name'] for other in all_monitors if str(other.get('id'))==str(mirror)),str(mirror))
+    return dict(output=name_ok(m['name']),mode=(f"{m['width']}x{m['height']}@{m['refreshRate']:.5f}" if m.get('width',0)>0 else 'preferred'),position=f"{m['x']}x{m['y']}",scale=m.get('scale') or 1,transform=m.get('transform',0),mirror=mirror,disabled=bool(m.get('disabled')))
+
+def apply(spec):
+    
+    args=','.join(k+'='+('true' if v is True else 'false' if v is False else json.dumps(v)) for k,v in spec.items())
+    ctl('eval','hl.monitor({'+args+'})')
+
+def plan(ms,output,action,mode=None,scale=None):
+    target=next((m for m in ms if m['name']==name_ok(output)),None)
+    if not target:raise ValueError('This display is no longer connected.')
+    active=[m for m in ms if not m.get('disabled') and m.get('mirrorOf','none') in ('none',None)]
+    base=next((m for m in active if internal(m) and m['name']!=output),None) or next((m for m in active if m['name']!=output),None)
+    spec=current_spec(target,ms)
+    spec['disabled']=False
+    if action=='configure':
+        if scale not in SCALES:raise ValueError('Unsupported display scale')
+        clean=mode.removesuffix('Hz') if isinstance(mode,str) else ''
+        allowed=[x.removesuffix('Hz') for x in target.get('availableModes',[])]
+        if clean!='preferred' and clean not in allowed:raise ValueError('Choose a mode supported by this display.')
+        spec.update(mode=clean,scale=scale)
+    elif action=='off':
+        if internal(target) or not base:raise ValueError('The laptop or last active display cannot be turned off here.')
+        spec['disabled']=True
+    elif action in ('right','left','above','below','mirror'):
+        if not base or internal(target):raise ValueError('Connect an external display to use this layout.')
+        if target.get('disabled'):spec.update(mode='preferred',scale=1)
+        bw,bh=base['width']/base['scale'],base['height']/base['scale']
+        tw,th=target['width']/spec['scale'],target['height']/spec['scale']
+        if base.get('transform',0)%2:bw,bh=bh,bw
+        if target.get('transform',0)%2:tw,th=th,tw
+        x,y=base['x'],base['y']
+        if action=='right':x+=bw
+        elif action=='left':x-=tw
+        elif action=='below':y+=bh
+        elif action=='above':y-=th
+        spec.update(position=f'{round(x)}x{round(y)}',mirror=base['name'] if action=='mirror' else '')
+    else:raise ValueError('Unknown display action')
+    return target,spec
+
+def restore(snapshot):
+    connected={m['name'] for m in monitors()}
+    
+    for s in sorted(snapshot,key=lambda s:s.get('disabled',False)):
+        if s['output'] in connected:apply(s)
+
+def apply_layout(ms,spec):
+    
+    
+    for m in ms:
+        if m['name']!=spec['output'] and not m.get('disabled') and m.get('mirrorOf','none') in ('none',None):
+            apply(current_spec(m,ms))
+    apply(spec)
+
+
+def wait_applied(spec,action):
+    deadline=time.monotonic()+1.6
+    while time.monotonic()<deadline:
+        ms=monitors();actual=next((m for m in ms if m['name']==spec['output']),None)
+        if actual:
+            correct=bool(actual.get('disabled'))==bool(spec.get('disabled'))
+            if not spec.get('disabled'):
+                correct=correct and abs(actual['scale']-spec['scale'])<.01
+                if action=='mirror':
+                    base=next((m for m in ms if m['name']==spec['mirror']),{})
+                    correct=correct and actual.get('mirrorOf') in (spec['mirror'],str(base.get('id')))
+                elif action in ('left','right','above','below'):
+                    correct=correct and f"{actual['x']}x{actual['y']}"==spec['position'] and actual.get('mirrorOf','none')=='none'
+                elif action=='configure' and spec['mode']!='preferred':
+                    match=re.match(r'^(\d+)x(\d+)@([\d.]+)',spec['mode'])
+                    if match:correct=correct and actual['width']==int(match[1]) and actual['height']==int(match[2]) and abs(actual['refreshRate']-float(match[3]))<.25
+            if correct:return
+        time.sleep(.1)
+    raise RuntimeError('The display did not accept this setup. The previous layout has been restored.')
+
+
+def preview(output,action,mode=None,scale=None):
+    if pending():raise ValueError('Keep or revert the current display change first.')
+    ms=monitors();target,spec=plan(ms,output,action,mode,scale)
+    token=secrets.token_hex(12)
+    change=dict(token=token,session=SESSION,deadline=time.time()+15,snapshot=[current_spec(m,ms) for m in ms],identity=identity(target),spec=spec,action=action,output=output)
+    write('preview.json',change)
+    
+    try:
+        subprocess.Popen([sys.executable,str(Path(__file__).resolve()),'watch',token],start_new_session=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,stdin=subprocess.DEVNULL)
+        apply_layout(ms,spec)
+        wait_applied(spec,action)
+    except Exception:
+        restore(change['snapshot']);write('preview.json',{});raise
+
+def keep():
+    p=pending()
+    if not p:raise ValueError('There is no display change to keep.')
+    if time.time()>=p['deadline']:raise ValueError('The preview expired. Try the change again.')
+    profiles=read('profiles.json',{})
+    profiles[p['identity']]=dict(spec=p['spec'],action=p['action'])
+    write('profiles.json',profiles);write('preview.json',{})
+
+def revert():
+    p=pending()
+    if p:restore(p['snapshot']);write('preview.json',{})
+
+def reconnect(output):
+    if pending():return
+    ms=monitors();m=next((m for m in ms if m['name']==output),None)
+    if not m:return
+    profile=read('profiles.json',{}).get(identity(m))
+    if not profile:return
+    spec=dict(profile['spec'])
+    if profile['action'] in ('left','right','above','below','mirror','off'):
+        desired=dict(m,scale=profile['spec']['scale'])
+        match=re.match(r'^(\d+)x(\d+)@',profile['spec']['mode'])
+        if match:desired.update(width=int(match[1]),height=int(match[2]))
+        _,spec=plan([desired if current['name']==output else current for current in ms],output,profile['action'])
+        spec['scale']=profile['spec']['scale'];spec['mode']=profile['spec']['mode']
+    try:
+        apply_layout(ms,spec)
+        wait_applied(spec,profile['action'])
+    except Exception:
+        restore([current_spec(current,ms) for current in ms]);raise
+
+
+def status():
+    return dict(monitors=monitors(),preview=pending(),now=time.time())
+
+def main():
+    p=argparse.ArgumentParser(description=__doc__)
+    p.add_argument('action',choices=['status','layout','configure','keep','revert','reconnect','watch'])
+    p.add_argument('output',nargs='?');p.add_argument('value',nargs='?');p.add_argument('scale',nargs='?',type=float)
+    a=p.parse_args()
+    if a.action=='status':print(json.dumps(status()));return
+    STATE.mkdir(parents=True,exist_ok=True,mode=0o700)
+    if a.action=='watch':
+        while True:
+            with (STATE/'operation.lock').open('w') as lock:
+                fcntl.flock(lock,fcntl.LOCK_EX)
+                change=pending()
+                if change.get('token')!=a.output:return
+                if time.time()>=change['deadline']:revert();return
+            time.sleep(.4)
+    with (STATE/'operation.lock').open('w') as lock:
+        fcntl.flock(lock,fcntl.LOCK_EX)
+        if a.action=='layout':preview(a.output,a.value)
+        elif a.action=='configure':preview(a.output,'configure',a.value,a.scale)
+        elif a.action=='keep':keep()
+        elif a.action=='revert':revert()
+        elif a.action=='reconnect':reconnect(name_ok(a.output))
+
+if __name__=='__main__':
+    try:main()
+    except (OSError,ValueError,RuntimeError,subprocess.SubprocessError) as e:print(str(e),file=sys.stderr);sys.exit(1)

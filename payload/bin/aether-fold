@@ -1,0 +1,143 @@
+#!/usr/bin/env python3
+"""Fold live windows into Aether; retain their workspace for restoration."""
+import fcntl
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
+import sys
+import time
+
+STATE=Path(os.environ.get('XDG_STATE_HOME',Path.home()/'.local/state'))/'aether/warp'
+SESSION=os.environ.get('HYPRLAND_INSTANCE_SIGNATURE','')
+SHELL=Path.home()/'.config/hypr/scripts/quickshell/Shell.qml'
+
+
+def ctl(*args):
+    result=subprocess.run(['hyprctl',*args],capture_output=True,text=True,timeout=4)
+    if result.returncode:raise RuntimeError(result.stderr.strip() or result.stdout.strip())
+    return result.stdout.strip()
+
+
+def clients():return json.loads(ctl('-j','clients'))
+def read():
+    try:
+        data=json.loads((STATE/'folded.json').read_text())
+        return data.get('items',[]) if data.get('session')==SESSION else []
+    except (ValueError,OSError):return []
+
+
+def save(items):
+    path=STATE/'folded.json';temp=path.with_suffix('.tmp')
+    temp.write_text(json.dumps({'session':SESSION,'items':items}));temp.chmod(0o600);temp.replace(path)
+
+
+def same(item,window):
+    return item['address']==window['address'] and item['pid']==window['pid'] and item.get('stableId')==window.get('stableId')
+
+
+def live_items(items,windows):
+    return [dict(i,title=w.get('title',i['title'])) for i in items for w in windows if same(i,w) and w['workspace']['name']=='special:minimized']
+
+
+def dock_items(items,windows):
+    result=live_items(items,windows)
+    known={i['address'] for i in result}
+    for w in windows:
+        if w.get('mapped') and w['workspace']['name']=='special:minimized' and w['address'] not in known:
+            item={k:w.get(k) for k in ('address','pid','stableId','class','title','floating','at','size','fullscreen')}
+            item.update(workspace='',adopted=True)
+            result.append(item)
+    return result
+
+
+def dispatch(expression):
+    reply=ctl('dispatch',expression)
+    if not reply.startswith('ok'):raise RuntimeError(reply)
+
+
+def target(address):
+    if not re.fullmatch(r'0x[0-9a-f]+',address):raise ValueError('Invalid window address')
+    return next((w for w in clients() if w['address']==address),None)
+
+
+def animate(action,address,origin):
+    if not origin.get('enabled',True):return False
+    try:
+        from importlib.machinery import SourceFileLoader
+        warp=SourceFileLoader('aether_warp',str(Path.home()/'.local/bin/aether-warp')).load_module()
+        parsed=warp.validate_origin(origin)
+        if not parsed or not warp.enabled() or not warp.load():return False
+        monitor,values=parsed
+        return ctl('aetherwarp',action+' '+address+' '+monitor+' '+' '.join(map(str,values))+' '+str(int(origin.get('delayMs',0))))=='ok'
+    except (OSError,ValueError,RuntimeError,subprocess.SubprocessError):return False
+
+
+def cancel(address):
+    try:ctl('aetherwarp','cancel '+address)
+    except (RuntimeError,subprocess.SubprocessError):pass
+
+
+def move(address,workspace):
+    dispatch('hl.dsp.window.move({workspace='+json.dumps(workspace)+',follow=false,window="address:'+address+'"})')
+
+
+def fold(origin,address=None):
+    w=target(address) if address else json.loads(ctl('-j','activewindow'))
+    if not w or not w.get('mapped') or w['workspace']['name'].startswith('special:') or w.get('pinned') or w.get('grouped'):
+        raise ValueError('Choose a normal, ungrouped window to fold into Aether.')
+    items=live_items(read(),clients())
+    if len(dock_items(items,clients()))>=16:raise ValueError('The island already holds 16 windows. Restore one first.')
+    item={k:w.get(k) for k in ('address','pid','stableId','class','title','floating','at','size','fullscreen')}
+    item.update(workspace=w['workspace']['name'],created=time.time())
+    animated=animate('fold',w['address'],dict(origin,delayMs=0))
+    if animated:time.sleep(.64)
+    try:
+        current=target(w['address'])
+        if not current or not same(item,current):raise ValueError('The window closed before it could be folded.')
+        if current['workspace']!=w['workspace']:raise ValueError('The window moved; folding was cancelled.')
+        # Save before moving the window.
+        save(items+[item])
+        move(w['address'],'special:minimized')
+        if target(w['address'])['workspace']['name']!='special:minimized':raise RuntimeError('The compositor did not fold the window.')
+    finally:cancel(w['address'])
+
+
+def restore(address,origin):
+    items=dock_items(read(),clients());item=next((i for i in items if i['address']==address),None)
+    if not item:raise ValueError('This window has already closed or been restored.')
+    if not item['workspace']:
+        workspace=json.loads(ctl('-j','activeworkspace'))['name']
+        if workspace.startswith('special:'):raise ValueError('Choose a normal workspace to restore this window.')
+        item=dict(item,workspace=workspace)
+    # Arm before showing the window.
+    animated=animate('unfold',address,origin)
+    try:
+        move(address,item['workspace'])
+        dispatch('hl.dsp.focus({window="address:'+address+'"})')
+        current=target(address)
+        if not current or current['workspace']['name']!=item['workspace']:raise RuntimeError('The window could not be restored.')
+        save([i for i in live_items(read(),clients()) if i['address']!=address])
+    except Exception:
+        if animated:cancel(address)
+        raise
+
+
+def main():
+    action=sys.argv[1] if len(sys.argv)>1 else 'status'
+    if action=='request':
+        subprocess.run(['qs','-p',str(SHELL),'ipc','call','island','fold'],check=True);return
+    if action=='status':print(json.dumps({'items':dock_items(read(),clients())}));return
+    STATE.mkdir(parents=True,exist_ok=True,mode=0o700)
+    with (STATE/'fold.lock').open('w') as lock:
+        try:fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        except BlockingIOError:raise ValueError('A window is already moving. Try again in a moment.')
+        if action=='fold':fold(json.loads(sys.argv[2]),sys.argv[3] if len(sys.argv)>3 else None)
+        elif action=='restore':restore(sys.argv[2],json.loads(sys.argv[3]))
+        else:raise ValueError('Unknown fold action')
+
+if __name__=='__main__':
+    try:main()
+    except (ValueError,OSError,RuntimeError,subprocess.SubprocessError) as e:
+        print(str(e),file=sys.stderr);sys.exit(1)

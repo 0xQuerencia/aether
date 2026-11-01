@@ -1,0 +1,38 @@
+[
+  {
+    "id": "midnight-forest",
+    "label": "Midnight Forest",
+    "colors": [
+      "#88d6bb",
+      "#b2ccc1",
+      "#a8cbe2",
+      "#dee4df",
+      "#252b29",
+      "#89938e"
+    ]
+  },
+  {
+    "id": "warm-sand",
+    "label": "Warm Sand",
+    "colors": [
+      "#f7bb71",
+      "#dfc2a2",
+      "#bbcd9e",
+      "#eee0d4",
+      "#302921",
+      "#9c8e80"
+    ]
+  },
+  {
+    "id": "blue-hour",
+    "label": "Blue Hour",
+    "colors": [
+      "#94cdf7",
+      "#b7c9d9",
+      "#cec0e8",
+      "#dfe3e8",
+      "#262a2e",
+      "#8b9198"
+    ]
+  }
+]

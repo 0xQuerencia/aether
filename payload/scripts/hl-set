@@ -1,0 +1,105 @@
+#!/usr/bin/env python3
+import json
+import os
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+
+OPTION_PART = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+LUA_CONFIG = Path.home() / ".config/hypr/hyprland.lua"
+
+
+def lua_value(value):
+    if value.lower() in ("true", "false"):
+        return value.lower()
+    try:
+        float(value)
+    except ValueError:
+        return json.dumps(value)
+    return value
+
+
+def render_table(tree):
+    fields = []
+    for key in sorted(tree):
+        value = tree[key]
+        fields.append(f"{key} = {render_table(value) if isinstance(value, dict) else lua_value(value)}")
+    return "{ " + ", ".join(fields) + " }"
+
+
+def monitor_call(spec):
+    parts = [part.strip() for part in spec.split(",")]
+    if len(parts) < 4:
+        raise ValueError("monitor value must be output, mode, position, scale")
+    output, mode, position, scale = parts[:4]
+    if not output or not mode or not position or not scale:
+        raise ValueError("monitor value contains an empty field")
+    try:
+        scale_lua = str(float(scale))
+    except ValueError:
+        scale_lua = json.dumps(scale)
+    return "hl.monitor({ output = %s, mode = %s, position = %s, scale = %s })" % (
+        json.dumps(output), json.dumps(mode), json.dumps(position), scale_lua
+    )
+
+
+def lua_program(pairs):
+    options = {}
+    monitors = []
+    for key, value in pairs:
+        if key == "monitor":
+            monitors.append(monitor_call(value))
+            continue
+        # Lua option names use underscores where hyprlang used hyphens (tap-to-click -> tap_to_click)
+        parts = key.replace("-", "_").split(":")
+        if not parts or not all(OPTION_PART.fullmatch(part) for part in parts):
+            raise ValueError(f"invalid Hyprland option key: {key}")
+        branch = options
+        for part in parts[:-1]:
+            child = branch.setdefault(part, {})
+            if not isinstance(child, dict):
+                raise ValueError(f"overlapping option keys: {key}")
+            branch = child
+        branch[parts[-1]] = value
+    calls = []
+    if options:
+        calls.append("hl.config(" + render_table(options) + ")")
+    calls.extend(monitors)
+    return "; ".join(calls)
+
+
+def run(args):
+    try:
+        return subprocess.run(args, capture_output=True, text=True, timeout=3)
+    except (OSError, subprocess.SubprocessError):
+        return None
+
+
+def main(argv):
+    if len(argv) < 3 or (len(argv) - 1) % 2 != 0:
+        print("usage: hl-set KEY VALUE [KEY VALUE ...]", file=sys.stderr)
+        return 2
+    pairs = list(zip(argv[1::2], argv[2::2]))
+    lua_mode = LUA_CONFIG.is_file()
+    if lua_mode:
+        try:
+            program = lua_program(pairs)
+        except ValueError as error:
+            print(str(error), file=sys.stderr)
+            return 2
+        result = run(["hyprctl", "eval", program])
+        if result is not None and result.returncode == 0 and "error" not in result.stdout.lower():
+            return 0
+
+    failed = False
+    for key, value in pairs:
+        result = run(["hyprctl", "keyword", key, value])
+        if result is None or result.returncode != 0:
+            failed = True
+    return 1 if failed else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

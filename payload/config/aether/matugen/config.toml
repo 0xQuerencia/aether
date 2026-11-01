@@ -1,0 +1,5 @@
+[config]
+reload_apps = false
+[templates.aether_shell]
+input_path = "~/.config/aether/matugen/colors.json.template"
+output_path = "~/.cache/quickshell/colors/qs_colors.json"

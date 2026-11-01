@@ -1,0 +1,85 @@
+#!/usr/bin/env python3
+"""Run commands as independent Aether tasks, preserving private output logs."""
+import argparse,fcntl,json,os,re,shutil,subprocess,sys,time,uuid
+from pathlib import Path
+
+ROOT=Path(os.environ.get('XDG_STATE_HOME',str(Path.home()/'.local/state')))/'aether/task-jobs'
+def init():
+    ROOT.mkdir(parents=True,exist_ok=True);ROOT.chmod(0o700)
+def atomic(path,value):
+    tmp=path.with_name(path.name+'.'+uuid.uuid4().hex+'.tmp')
+    fd=os.open(tmp,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
+    with os.fdopen(fd,'w') as stream:json.dump(value,stream)
+    os.replace(tmp,path)
+def write(job):
+    init()
+    with open(ROOT/'lock','a') as lock:
+        os.chmod(ROOT/'lock',0o600);fcntl.flock(lock,fcntl.LOCK_EX)
+        atomic(ROOT/(job['id']+'.json'),job)
+        jobs=[]
+        for path in ROOT.glob('*.json'):
+            if not re.fullmatch(r'[0-9a-f]{12}',path.stem):continue
+            try:jobs.append(json.loads(path.read_text()))
+            except (ValueError,OSError):pass
+        jobs.sort(key=lambda j:j['created'],reverse=True)
+        atomic(ROOT/'index.json',jobs)
+def read(identifier):
+    if not re.fullmatch(r'[0-9a-f]{12}',identifier):raise ValueError('Invalid task ID')
+    return json.loads((ROOT/(identifier+'.json')).read_text())
+def proc_start(pid):
+    try:return Path(f'/proc/{pid}/stat').read_text().rsplit(')',1)[1].split()[19]
+    except OSError:return None
+def work(identifier):
+    job=read(identifier);job.update(status='running',pid=os.getpid(),processStart=proc_start(os.getpid()),started=time.time());write(job)
+    log=ROOT/(identifier+'.log');fd=os.open(log,os.O_WRONLY|os.O_CREAT|os.O_TRUNC,0o600)
+    with os.fdopen(fd,'wb') as output:
+        try:
+            child=subprocess.Popen(job['argv'],cwd=job['cwd'],stdout=output,stderr=subprocess.STDOUT,stdin=subprocess.DEVNULL)
+            code=child.wait()
+        except (OSError,ValueError) as error:
+            output.write(('Unable to start task: '+str(error)+'\n').encode());code=127
+    job.update(status='succeeded' if code==0 else 'failed',exitCode=code,finished=time.time());write(job)
+    return code
+def list_jobs():
+    init()
+    if not (ROOT/'index.json').exists():atomic(ROOT/'index.json',[])
+    jobs=json.loads((ROOT/'index.json').read_text())
+    for job in jobs:
+        if job['status']=='running' and proc_start(job.get('pid',0))!=job.get('processStart'):
+            job.update(status='interrupted',finished=time.time());write(job)
+    return jobs
+def main(args):
+    init()
+    if args == ['panel']:
+        return subprocess.call(['qs','-p',str(Path.home()/'.config/hypr/scripts/quickshell/Shell.qml'),'ipc','call','island','tasks'])
+    if args and args[0]=='_worker':return work(args[1])
+    if args and args[0] in ['init','list']:
+        jobs=list_jobs()
+        if args[0]=='list':print(json.dumps(jobs,indent=2))
+        return 0
+    if args and args[0] in ['open','show','dismiss']:
+        action,identifier=args[:2];job=read(identifier)
+        if action=='dismiss':job['dismissed']=True;write(job);return 0
+        if action=='show':print(json.dumps(job,indent=2));return 0
+        log=ROOT/(identifier+'.log')
+        if not log.exists():raise ValueError('Task has not produced a log yet')
+        if shutil.which('foot') and shutil.which('less'):
+            subprocess.Popen(['foot','--title','Aether task: '+job['title'],'less','-R','+G','--',str(log)],start_new_session=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+        else:subprocess.Popen(['xdg-open',str(log)],start_new_session=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+        return 0
+    parser=argparse.ArgumentParser(description=__doc__,epilog='Example: aether-task --title Build -- npm run build')
+    parser.add_argument('--thumbnail');parser.add_argument('--output');parser.add_argument('--title');parser.add_argument('--wait',action='store_true',help='wait and return the command exit code')
+    parser.add_argument('command',nargs=argparse.REMAINDER)
+    options=parser.parse_args(args);argv=options.command
+    if argv and argv[0]=='--':argv=argv[1:]
+    if not argv:parser.error('provide a command, e.g. aether-task -- npm run build')
+    identifier=uuid.uuid4().hex[:12]
+    job={'id':identifier,'title':options.title or ' '.join(argv)[:80],'argv':argv,'cwd':str(Path.cwd()),'created':time.time(),'status':'queued','dismissed':False,'output':options.output or '', 'thumbnail':options.thumbnail or ''}
+    write(job)
+    worker=subprocess.Popen([sys.executable,str(Path(__file__).resolve()),'_worker',identifier],stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True)
+    print(identifier,flush=True)
+    if options.wait:return worker.wait()
+    return 0
+if __name__=='__main__':
+    try:sys.exit(main(sys.argv[1:]))
+    except (OSError,ValueError,IndexError) as error:print('aether-task: '+str(error),file=sys.stderr);sys.exit(2)

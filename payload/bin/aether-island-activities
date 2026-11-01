@@ -1,0 +1,246 @@
+#!/usr/bin/env python3
+"""Persistent island timers and real Bluetooth headphone connection state."""
+import argparse,fcntl,json,math,os,queue,re,signal,subprocess,sys,threading,time,uuid
+from pathlib import Path
+ROOT=Path(os.environ.get('XDG_STATE_HOME',Path.home()/'.local/state'))/'aether/live-activities'
+RUN=Path(os.environ.get('XDG_RUNTIME_DIR','/run/user/'+str(os.getuid())))/'quickshell/island'
+BOOT=Path('/proc/sys/kernel/random/boot_id').read_text().strip()
+def boot_time():return time.clock_gettime(time.CLOCK_BOOTTIME)
+def init():ROOT.mkdir(parents=True,exist_ok=True);ROOT.chmod(0o700)
+def read():
+ try:
+  data=json.loads((ROOT/'state.json').read_text())
+  if not isinstance(data,dict):raise ValueError()
+  return data
+ except (OSError,ValueError):return {'timers':[],'headphones':[],'event':{},'monitorAvailable':True}
+def atomic(data):
+ data['updated']=time.time();tmp=ROOT/('state.'+uuid.uuid4().hex+'.tmp');fd=os.open(tmp,os.O_CREAT|os.O_EXCL|os.O_WRONLY,0o600)
+ with os.fdopen(fd,'w') as f:json.dump(data,f)
+ os.replace(tmp,ROOT/'state.json')
+def transaction(fn):
+ init()
+ with open(ROOT/'state.lock','a') as lock:
+  os.chmod(lock.name,0o600);fcntl.flock(lock,fcntl.LOCK_EX);state=read();result=fn(state)
+  if result is not False:atomic(state)
+  return state
+
+def remaining(timer):
+ if timer['status']=='paused':return max(0,float(timer.get('remaining',0)))
+ if timer['status']=='done':return 0
+ if timer.get('boot')==BOOT:return max(0,timer['deadlineBoot']-boot_time())
+ return max(0,timer['deadline']-time.time())
+def event(state,kind,**values):state['event']={'id':uuid.uuid4().hex,'kind':kind,'time':time.time(),**values}
+
+def read_power(root=Path('/sys/class/power_supply')):
+ """Read authoritative AC/battery values from the kernel power-supply API."""
+ supplies=[]
+ for path in sorted(root.iterdir()) if root.exists() else []:
+  try:kind=(path/'type').read_text().strip().casefold();supplies.append((path,kind))
+  except OSError:continue
+ batteries=[path for path,kind in supplies if kind=='battery']
+ adapters=[path for path,kind in supplies if kind in ('mains','usb','usb_c','usb-c','usb_pd','usb-pd')]
+ if not batteries or not adapters:return None
+ battery=batteries[0]
+ def read_int(path):
+  try:return int(path.read_text().strip())
+  except (OSError,ValueError):return None
+ online_values=[read_int(path/'online') for path in adapters]
+ online_values=[value for value in online_values if value is not None]
+ if not online_values:return None
+ online=any(value==1 for value in online_values)
+ status='Unknown'
+ try:status=(battery/'status').read_text().strip()
+ except OSError:pass
+ capacity=read_int(battery/'capacity')
+ capacity=max(0,min(100,capacity)) if capacity is not None else None
+ charge_now=read_int(battery/'charge_now');charge_full=read_int(battery/'charge_full')
+ charge_design=read_int(battery/'charge_full_design')
+ energy_now=read_int(battery/'energy_now');energy_full=read_int(battery/'energy_full')
+ energy_design=read_int(battery/'energy_full_design')
+ microamps=read_int(battery/'current_now');microvolts=read_int(battery/'voltage_now')
+ microwatts=read_int(battery/'power_now')
+ rate=None
+ if status=='Charging':
+  if microwatts is not None and microwatts!=0:rate=abs(microwatts)/1_000_000
+  else:
+   if microamps is not None and microvolts is not None and microamps!=0 and microvolts>0:
+    rate=abs(microamps)*microvolts/1_000_000_000_000
+  if rate is not None and 0<rate<500:rate=round(rate,1)
+  else:rate=None
+ health=None
+ if charge_full is not None and charge_design is not None and charge_full>0 and charge_design>0:
+  health=round(charge_full*100/charge_design)
+ elif energy_full is not None and energy_design is not None and energy_full>0 and energy_design>0:
+  health=round(energy_full*100/energy_design)
+ if health is not None and not 40<=health<=110:health=None
+ minutes_full=None;minutes_empty=None
+ charge_flow=abs(microamps) if microamps is not None else None
+ energy_flow=abs(microwatts) if microwatts is not None else None
+ if status=='Charging':
+  if charge_now is not None and charge_full is not None and charge_full>charge_now and charge_flow:
+   minutes_full=round((charge_full-charge_now)*60/charge_flow)
+  elif energy_now is not None and energy_full is not None and energy_full>energy_now and energy_flow:
+   minutes_full=round((energy_full-energy_now)*60/energy_flow)
+ elif status=='Discharging':
+  if charge_now is not None and charge_now>0 and charge_flow:
+   minutes_empty=round(charge_now*60/charge_flow)
+  elif energy_now is not None and energy_now>0 and energy_flow:
+   minutes_empty=round(energy_now*60/energy_flow)
+ if minutes_full is not None and not 1<=minutes_full<=1440:minutes_full=None
+ if minutes_empty is not None and not 1<=minutes_empty<=1440:minutes_empty=None
+ return {'online':online,'status':status,'percent':capacity,'rateWatts':rate,
+         'minutesToFull':minutes_full,'minutesToEmpty':minutes_empty,'maximumCapacityPercent':health}
+
+def power_update(state,sample,baseline=False):
+ if sample is None:return False
+ old=state.get('power');state['power']=sample
+ if old is None or baseline:return old!=sample
+ previous=old.get('online') if isinstance(old,dict) else None
+ current=sample.get('online')
+ if previous is not None and current is not None and previous!=current:
+  event(state,'power-connected' if current else 'power-disconnected',power=sample)
+ return old!=sample
+
+def reconcile(state):
+ changed=False;expired=[]
+ for timer in state.get('timers',[]):
+  if timer['status']!='running':continue
+  left=remaining(timer)
+  if left<=0:
+   timer.update(status='done',finished=time.time(),remaining=0);expired.append(timer);changed=True
+  elif timer.get('boot')!=BOOT or abs(timer['deadline']-(time.time()+left))>2:
+   timer.update(boot=BOOT,deadline=time.time()+left,deadlineBoot=boot_time()+left);changed=True
+ if expired:event(state,'timer-done',timerId=expired[-1]['id'],count=len(expired),label=expired[-1]['label'])
+ return changed,expired
+
+def timer_command(action,identifier=None,seconds=None,label='Timer',silent=False):
+ expired=[]
+ def apply(state):
+  _,finished=reconcile(state);expired.extend(finished)
+  timers=state.setdefault('timers',[])
+  if action=='add':
+   if seconds is None or not math.isfinite(seconds) or not 1<=seconds<=86400:raise ValueError('Choose a timer between one second and 24 hours.')
+   if len(timers)>=8:raise ValueError('Eight timers are already on the island. Dismiss one before adding another.')
+   timers.append({'id':uuid.uuid4().hex[:12],'label':(label.strip() or 'Timer')[:48],'duration':seconds,'status':'running','created':time.time(),'deadline':time.time()+seconds,'deadlineBoot':boot_time()+seconds,'boot':BOOT,'silent':silent})
+   state['lastAdded']=timers[-1]['id'];return
+  timer=next((t for t in timers if t['id']==identifier),None)
+  if not timer:raise ValueError('This timer has already been dismissed.')
+  if action=='pause' and timer['status']=='running':timer.update(remaining=remaining(timer),status='paused')
+  elif action=='resume' and timer['status']=='paused':timer.update(deadline=time.time()+timer['remaining'],deadlineBoot=boot_time()+timer['remaining'],boot=BOOT,status='running')
+  elif action=='restart':timer.update(deadline=time.time()+timer['duration'],deadlineBoot=boot_time()+timer['duration'],boot=BOOT,status='running')
+  elif action in ('cancel','dismiss'):state['timers']=[t for t in timers if t['id']!=identifier]
+ result=transaction(apply);alarm(expired);return result
+
+def run(*args):return subprocess.check_output(args,text=True,stderr=subprocess.DEVNULL,timeout=2).strip()
+def parse_info(mac,info):
+ if not re.search(r'^\s*Connected: yes\s*$',info,re.M):return None
+ icon=re.search(r'^\s*Icon:\s*(.+)$',info,re.M)
+ if not ((icon and any(k in icon[1] for k in ('headset','headphone','audio-card'))) or re.search(r'0000110[b8]|0000111e',info,re.I)):return None
+ alias=re.search(r'^\s*(?:Alias|Name):\s*(.+)$',info,re.M)
+ battery=re.search(r'Battery Percentage:.*?\((\d+)\)',info)
+ level=int(battery[1]) if battery and 0<=int(battery[1])<=100 else None
+ return {'mac':mac,'name':alias[1].strip() if alias else 'Headphones','battery':level,'connected':True,'sink':'','audioActive':False,'routeKnown':False}
+def headphones():
+ connected=run('bluetoothctl','devices','Connected');devices=[]
+ for mac in re.findall(r'^Device ((?:[0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}) ',connected,re.M)[:8]:
+  try:
+   device=parse_info(mac.upper(),run('bluetoothctl','info',mac))
+   if device:devices.append(device)
+  except (OSError,subprocess.SubprocessError):continue
+ try:
+  sinks=json.loads(run('pactl','-f','json','list','sinks'));default=run('pactl','get-default-sink')
+  for device in devices:
+   device['routeKnown']=True
+   sink=next((s for s in sinks if s.get('properties',{}).get('api.bluez5.address','').upper()==device['mac'] or s.get('properties',{}).get('device.string','').upper()==device['mac']),None)
+   if sink:device.update(sink=sink['name'],audioActive=sink['name']==default)
+ except (OSError,ValueError,subprocess.SubprocessError):pass
+ return sorted(devices,key=lambda d:(not d['audioActive'],d['mac']))
+def headphone_update(state,devices,baseline=False):
+ old={d['mac']:d for d in state.get('headphones',[])};new={d['mac']:d for d in devices}
+ changed=state.get('headphones',[])!=devices or not state.get('monitorAvailable',True)
+ state.update(headphones=devices,monitorAvailable=True)
+ if not baseline:
+  added=[d for mac,d in new.items() if mac not in old];removed=[d for mac,d in old.items() if mac not in new]
+  if added:event(state,'headphones-connected',device=added[-1])
+  elif removed:event(state,'headphones-disconnected',device={**removed[-1],'connected':False,'audioActive':False})
+ return changed
+
+def alarm(expired):
+ 
+ try:
+  if (RUN/'dnd').read_text().strip()=='1':return
+ except OSError:pass
+ if expired and any(not t.get('silent') for t in expired):
+  bell=Path.home()/'.config/hypr/scripts/quickshell/pomodoro/bell.ogg'
+  if bell.exists():subprocess.Popen(['paplay',str(bell)],stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+
+def daemon():
+ init();exclusive=open(ROOT/'daemon.lock','a');os.chmod(exclusive.name,0o600)
+ try:fcntl.flock(exclusive,fcntl.LOCK_EX|fcntl.LOCK_NB)
+ except BlockingIOError:return
+ stop=threading.Event();snapshots=queue.Queue(maxsize=1);power_snapshots=queue.Queue(maxsize=1)
+ def watch():
+  while not stop.is_set():
+   try:sample=headphones()
+   except (OSError,ValueError,subprocess.SubprocessError):sample=None
+   try:snapshots.put_nowait(sample)
+   except queue.Full:pass
+   stop.wait(3)
+ def watch_power():
+  while not stop.is_set():
+   try:sample=read_power()
+   except (OSError,ValueError,PermissionError):sample=None
+   try:power_snapshots.put_nowait(sample)
+   except queue.Full:pass
+   stop.wait(1)
+ threading.Thread(target=watch,daemon=True).start();threading.Thread(target=watch_power,daemon=True).start();baseline=True;power_baseline=True
+ def halt(*_):stop.set()
+ signal.signal(signal.SIGTERM,halt);signal.signal(signal.SIGINT,halt)
+ transaction(lambda state:None)
+ last_logged=read().get("event",{}).get("id")
+ print("Aether activities started; deadline reconciliation and headphone/power monitoring active",flush=True)
+ while not stop.is_set():
+  try:sample=snapshots.get_nowait();has_sample=True
+  except queue.Empty:sample=None;has_sample=False
+  try:power_sample=power_snapshots.get_nowait();has_power_sample=True
+  except queue.Empty:power_sample=None;has_power_sample=False
+  expired=[]
+  def update(state):
+   nonlocal baseline,power_baseline
+   changed,finished=reconcile(state);expired.extend(finished)
+   if has_power_sample and power_sample is not None:
+    changed=power_update(state,power_sample,power_baseline) or changed;power_baseline=False
+   if has_sample:
+    if sample is not None:changed=headphone_update(state,sample,baseline) or changed;baseline=False
+    elif state.get('monitorAvailable',True):state['monitorAvailable']=False;changed=True
+   return None if changed else False
+  current=transaction(update)
+  activity=current.get('event',{})
+  if activity.get('id') and activity['id']!=last_logged:
+   print('Activity: '+activity.get('kind','unknown')+'; timers='+str(len(current.get('timers',[])))+'; audio devices='+str(len(current.get('headphones',[]))),flush=True);last_logged=activity['id']
+  alarm(expired);stop.wait(.25)
+
+def duration(value):
+ match=re.fullmatch(r'(\d+(?:\.\d+)?)([smh]?)',value)
+ if not match:raise ValueError('Use a duration such as 30s, 5m or 1h.')
+ return float(match[1])*{'s':1,'m':60,'h':3600,'':60}[match[2]]
+def main():
+ os.umask(0o077);init();parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('command',choices=['daemon','status','timer','headphones','use-audio']);parser.add_argument('value',nargs='?',default='panel');parser.add_argument('identifier',nargs='?');parser.add_argument('--label',default='Timer');parser.add_argument('--silent',action='store_true');args=parser.parse_args()
+ if args.command=='daemon':daemon()
+ elif args.command=='status':print(json.dumps(read()))
+ elif args.command=='headphones':
+  result=headphones();print(json.dumps(result))
+ elif args.command=='use-audio':
+  device=next((d for d in headphones() if d['mac']==args.value.upper()),None)
+  if not device or not device['sink']:raise ValueError('The headphone output is not ready. Reconnect it or open Sound.')
+  subprocess.run(['pactl','set-default-sink',device['sink']],check=True);print(json.dumps({'done':True}))
+ elif args.command=='timer':
+  if args.value in ('panel','peek'):
+   method='timers' if args.value=='panel' else 'timerpeek';subprocess.run(['qs','-p',str(Path.home()/'.config/hypr/scripts/quickshell/Shell.qml'),'ipc','call','island',method],check=True);return
+  if args.value=='list':print(json.dumps(read().get('timers',[])));return
+  if args.value in ('pause','resume','restart','cancel','dismiss'):state=timer_command(args.value,args.identifier)
+  else:state=timer_command('add',seconds=duration(args.value),label=args.label,silent=args.silent)
+  print(json.dumps({'done':True,'id':state.get('lastAdded',''),'added':args.value not in ('pause','resume','restart','cancel','dismiss')}))
+if __name__=='__main__':
+ try:main()
+ except (OSError,ValueError,subprocess.SubprocessError) as error:print('Aether: '+str(error),file=sys.stderr);sys.exit(1)

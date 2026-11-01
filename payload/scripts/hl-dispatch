@@ -1,0 +1,75 @@
+#!/usr/bin/env python3
+"""Run a Hyprland dispatcher written in the old hyprlang form, on either config format.
+
+  hl-dispatch exec CMD...                       hl-dispatch workspace 3|e+1|special:x
+  hl-dispatch togglespecialworkspace NAME       hl-dispatch focuswindow address:0x...
+  hl-dispatch movetoworkspace[silent] WS[,address:0x...]
+  hl-dispatch exit
+
+With the Lua config, `hyprctl dispatch` takes Lua (`hl.dsp.*`), so the legacy form is
+translated first; if that is rejected (session still on hyprland.conf) the legacy form
+is sent as-is. Arguments are passed to hyprctl as argv, never through a shell.
+"""
+import json
+import subprocess
+import sys
+
+
+def lua_str(value):
+    return json.dumps(value, ensure_ascii=False)  # Lua has no \uXXXX escapes
+
+
+def translate(dispatcher, arg):
+    if dispatcher == "exec":
+        return "hl.dsp.exec_cmd(%s)" % lua_str(arg)
+    if dispatcher == "exit":
+        return "hl.dsp.exit()"
+    if dispatcher == "workspace":
+        return "hl.dsp.focus({ workspace = %s })" % lua_str(arg)
+    if dispatcher == "togglespecialworkspace":
+        return "hl.dsp.workspace.toggle_special(%s)" % lua_str(arg or "special")
+    if dispatcher == "focuswindow":
+        return "hl.dsp.focus({ window = %s })" % lua_str(arg)
+    if dispatcher in ("movetoworkspace", "movetoworkspacesilent"):
+        workspace, _, window = arg.partition(",")
+        fields = ["workspace = %s" % lua_str(workspace.strip())]
+        if dispatcher == "movetoworkspacesilent":
+            fields.append("follow = false")
+        if window.strip():
+            fields.append("window = %s" % lua_str(window.strip()))
+        return "hl.dsp.window.move({ %s })" % ", ".join(fields)
+    return None
+
+
+def hyprctl(*args):
+    try:
+        result = subprocess.run(["hyprctl", "dispatch", *args], capture_output=True, text=True, timeout=5)
+    except (OSError, subprocess.SubprocessError) as error:
+        return False, str(error)
+    out = (result.stdout + result.stderr).strip()
+    return result.returncode == 0 and out.lower().startswith("ok"), out
+
+
+def main(argv):
+    if len(argv) < 2:
+        print(__doc__, file=sys.stderr)
+        return 2
+    dispatcher = argv[1]
+    rest = argv[2:]
+    if rest and rest[0] == "--":
+        rest = rest[1:]
+    arg = " ".join(rest)
+    lua = translate(dispatcher, arg)
+    if lua is not None:
+        ok, out = hyprctl(lua)
+        if ok:
+            return 0
+    ok, out = hyprctl(dispatcher, *rest)
+    if not ok:
+        print("hl-dispatch: %s %s -> %s" % (dispatcher, arg, out), file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

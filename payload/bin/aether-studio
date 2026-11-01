@@ -1,0 +1,185 @@
+#!/usr/bin/env python3
+"""Aether recording studio: selection, capture, audio, finalization and review."""
+import argparse,fcntl,json,os,re,signal,subprocess,sys,time,uuid
+from pathlib import Path
+from datetime import datetime
+ROOT=Path(os.environ.get('XDG_STATE_HOME',Path.home()/'.local/state'))/'aether/studio'
+RUN=Path(os.environ.get('XDG_RUNTIME_DIR','/run/user/'+str(os.getuid())))/'quickshell/island'
+ACTIVE={'starting','selecting','countdown','recording','finishing'}
+def init():
+ for p in [ROOT,RUN]:p.mkdir(parents=True,exist_ok=True)
+ ROOT.chmod(0o700)
+def atomic(p,data):
+ t=p.with_name(p.name+'.'+uuid.uuid4().hex+'.tmp');fd=os.open(t,os.O_CREAT|os.O_EXCL|os.O_WRONLY,0o600)
+ with os.fdopen(fd,'w') as f:json.dump(data,f)
+ os.replace(t,p)
+def read():
+ try:return json.loads((ROOT/'state.json').read_text())
+ except (OSError,ValueError):return {'status':'idle'}
+def proc_start(pid):
+ try:return Path('/proc/'+str(pid)+'/stat').read_text().rsplit(')',1)[1].split()[19]
+ except OSError:return None
+def live(s):return bool(s.get('pid') and s.get('processStart') and proc_start(s['pid'])==s.get('processStart'))
+def write(**changes):
+ s=read();s.update(changes,updated=time.time());atomic(ROOT/'state.json',s);return s
+def ipc(method):
+ subprocess.run(['qs','-p',str(Path.home()/'.config/hypr/scripts/quickshell/Shell.qml'),'ipc','call','island',method],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=3)
+def query(name):return json.loads(subprocess.check_output(['hyprctl','-j',name],text=True))
+def call(*args):return subprocess.check_output(args,text=True).strip()
+def metadata(path):
+ d=json.loads(call('ffprobe','-v','error','-show_format','-show_streams','-of','json',str(path)))
+ v=next(s for s in d['streams'] if s['codec_type']=='video')
+ return {'duration':float(d['format']['duration']),'width':v['width'],'height':v['height'],'audioStreams':sum(s['codec_type']=='audio' for s in d['streams'])}
+def reap():
+ s=read()
+ if s.get('status') in ACTIVE and s.get('pid') and not live(s):
+  write(status='failed',error='Recording process stopped unexpectedly. Any partial capture is retained.',pid=None)
+  (RUN/'recording_state').write_text('0')
+ return read()
+def preferences(value=None):
+ defaults={'mode':'screen','audio':'off','fps':60,'countdown':3}
+ data={**defaults,**(read_preferences())}
+ if value is not None:
+  if not isinstance(value,dict):raise ValueError('Invalid recording preferences.')
+  allowed={'mode':('screen','window','region'),'audio':('off','system','mic','both'),'fps':(30,60),'countdown':(0,3,5)}
+  if any(k not in allowed or v not in allowed[k] for k,v in value.items()):raise ValueError('Invalid recording preferences.')
+  data.update(value);atomic(ROOT/'preferences.json',data)
+ return data
+
+def read_preferences():
+ try:
+  data=json.loads((ROOT/'preferences.json').read_text())
+  if not isinstance(data,dict):return {}
+  allowed={'mode':('screen','window','region'),'audio':('off','system','mic','both'),'fps':(30,60),'countdown':(0,3,5)}
+  return {k:v for k,v in data.items() if k in allowed and v in allowed[k]}
+ except (OSError,ValueError):return {}
+
+def start(options):
+ with open(ROOT/'lock','a') as lock:
+  fcntl.flock(lock,fcntl.LOCK_EX);s=reap()
+  if s.get('status') in ACTIVE:raise ValueError('A recording is already starting or running.')
+  if subprocess.run(['pgrep','-x','wf-recorder'],stdout=subprocess.DEVNULL).returncode==0:raise ValueError('Another screen recorder is running. Stop it first.')
+  if s.get('status')=='ready' and s.get('output'):atomic(ROOT/'last.json',s)
+  if options.get('speed',1)==1:preferences({k:options[k] for k in ('mode','audio','fps','countdown')})
+  identifier=uuid.uuid4().hex[:12];atomic(ROOT/'state.json',{'id':identifier,'status':'starting','options':options,'created':time.time(),'pid':None,'error':''})
+  child=subprocess.Popen([sys.executable,str(Path(__file__).resolve()),'worker'],stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True)
+  write(pid=child.pid,processStart=proc_start(child.pid))
+ print(json.dumps({'started':True}))
+def stop():
+ s=reap()
+ if s.get('status') not in ACTIVE:return
+ if live(s):os.kill(s['pid'],signal.SIGUSR1)
+ elif s.get('status')=='starting':raise ValueError('Recorder is initializing. Try Stop again in a moment.')
+def worker():
+ 
+ with open(ROOT/'lock','a') as lock:fcntl.flock(lock,fcntl.LOCK_EX);s=read()
+ cancelled=False;children=[];began=False
+ def request_stop(*_):
+  nonlocal cancelled
+  cancelled=True
+ signal.signal(signal.SIGUSR1,request_stop);signal.signal(signal.SIGTERM,request_stop);signal.signal(signal.SIGINT,request_stop)
+ options=s['options'];private=ROOT/s['id'];private.mkdir(mode=0o700);log=private/'record.log';log.touch(mode=0o600);partial=private/'capture.mkv';audio=private/'audio.m4a'
+ def interrupt_child(p):
+  if p.poll() is None:
+   p.send_signal(signal.SIGINT)
+   try:p.wait(timeout=15)
+   except subprocess.TimeoutExpired:p.terminate();p.wait(timeout=5)
+ try:
+  time.sleep(.35);monitor=next(m for m in query('monitors') if m['focused']);geometry=options.get('geometry') or ''
+  if options['mode'] in ('region','window') and not geometry:
+   write(status='selecting')
+   args=['slurp'];boxes=None
+   if options['mode']=='window':
+    windows=[w for w in query('clients') if w.get('mapped') and not w.get('hidden') and w.get('workspace',{}).get('id')==monitor['activeWorkspace']['id']]
+    if not windows:raise ValueError('No visible windows to select on this workspace.')
+    boxes=''.join(f"{w['at'][0]},{w['at'][1]} {w['size'][0]}x{w['size'][1]} window\n" for w in windows);args+=['-r']
+   selector=subprocess.Popen(args,stdin=subprocess.PIPE if boxes else subprocess.DEVNULL,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,text=True)
+   if boxes:selector.stdin.write(boxes);selector.stdin.close()
+   while selector.poll() is None:
+    if cancelled:selector.terminate();selector.wait();break
+    time.sleep(.05)
+   geometry=selector.stdout.read().strip()
+   if selector.returncode or not geometry:write(status='idle',error='');return
+  if geometry and not re.fullmatch(r'-?\d+,-?\d+ \d+x\d+',geometry):raise ValueError('Invalid capture selection.')
+  
+  if geometry:
+   pos,dim=geometry.split();w,h=map(int,dim.split('x'));w-=w%2;h-=h%2
+   if min(w,h)<2:raise ValueError('Select a larger recording area.')
+   geometry=f'{pos} {w}x{h}'
+  write(status='countdown',remaining=options['countdown'],geometry=geometry,log=str(log));ipc('studio')
+  for n in range(options['countdown'],0,-1):
+   write(remaining=n)
+   for _ in range(10):
+    if cancelled:write(status='idle',error='');return
+    time.sleep(.1)
+  if cancelled:write(status='idle',error='');return
+  ipc('studioHide');time.sleep(.4)
+  command=['wf-recorder','-r',str(options['fps']),'-D','-c','h264_nvenc','-p','preset=p4','-p','cq=21','-x','yuv420p','-f',str(partial)]
+  if geometry:command+=['-g',geometry]
+  else:command+=['-o',monitor['name']]
+  with log.open('ab') as stream:
+   audio_mode=options['audio']
+   if audio_mode!='off':
+    command_audio=['ffmpeg','-hide_banner','-loglevel','error','-n']
+    if audio_mode in ('system','both'):
+     sink=call('pactl','get-default-sink');command_audio+=['-f','pulse','-i',sink+'.monitor']
+    if audio_mode in ('mic','both'):
+     source=call('pactl','get-default-source');command_audio+=['-f','pulse','-i',source]
+    if audio_mode=='both':command_audio+=['-filter_complex','[0:a][1:a]amix=inputs=2:duration=longest:normalize=0[a]','-map','[a]']
+    command_audio+=['-c:a','aac','-b:a','192k',str(audio)]
+    children.append(subprocess.Popen(command_audio,stdin=subprocess.DEVNULL,stdout=stream,stderr=stream))
+   recorder=subprocess.Popen(command,stdin=subprocess.DEVNULL,stdout=stream,stderr=stream);children.append(recorder)
+   started=time.time();write(status='recording',started=started,remaining=0);began=True
+   (RUN/'recording_start').write_text(str(int(started)));(RUN/'recording_state').write_text('1')
+   while not cancelled:
+    if any(p.poll() is not None for p in children):raise ValueError('A capture process stopped. Open Details for the recorder error.')
+    time.sleep(.1)
+   write(status='finishing');(RUN/'recording_state').write_text('0')
+   for p in children:interrupt_child(p)
+   if any(p.returncode not in (0,255) for p in children):raise ValueError('Capture did not finish cleanly. The partial recording is retained.')
+   info=metadata(partial)
+   output_dir=Path.home()/'Videos/Aether';output_dir.mkdir(parents=True,exist_ok=True)
+   output=output_dir/('Aether-'+datetime.now().strftime('%Y-%m-%d_%H-%M-%S')+'-'+s['id'][:6]+'.mp4')
+   args=['ffmpeg','-hide_banner','-loglevel','error','-n','-i',str(partial)]
+   if audio_mode!='off':args+=['-i',str(audio),'-map','0:v:0','-map','1:a:0','-c:v','copy','-c:a','copy']
+   else:args+=['-map','0:v:0','-c:v','copy','-an']
+   mult=options.get('speed',1)
+   if mult!=1:
+    args=['ffmpeg','-hide_banner','-loglevel','error','-n','-i',str(partial),'-vf',f'setpts=PTS/{mult}','-an','-c:v','libx264','-preset','fast','-crf','20']
+   args+=['-shortest','-movflags','+faststart',str(output)]
+   subprocess.run(args,check=True,stdout=stream,stderr=stream);output.chmod(0o600)
+   info=metadata(output);poster=Path(str(output)+'.preview.jpg')
+   subprocess.run(['ffmpeg','-hide_banner','-loglevel','error','-n','-i',str(output),'-frames:v','1','-vf','scale=640:-2',str(poster)],stdout=stream,stderr=stream,check=True);poster.chmod(0o600)
+   completed=write(status='ready',output=str(output),thumbnail=str(poster),**info,error='',pid=None);atomic(ROOT/'last.json',completed)
+   
+   partial.unlink(missing_ok=True);audio.unlink(missing_ok=True)
+ except BaseException as error:
+  write(status='failed',error=str(error),log=str(log),pid=None)
+ finally:
+  for p in children:interrupt_child(p)
+  (RUN/'recording_state').write_text('0')
+  if read().get('status') in ('ready','failed'):ipc('studio')
+def main():
+ os.umask(0o077)
+ init();p=argparse.ArgumentParser(description=__doc__);p.add_argument('action',choices=['panel','start','stop','status','elapsed','worker','toggle','region','timelapse','preferences','save-preferences','review']);p.add_argument('mult',nargs='?',type=int,default=4);p.add_argument('--mode',choices=['screen','window','region'],default='screen');p.add_argument('--audio',choices=['off','system','mic','both'],default='off');p.add_argument('--fps',choices=[30,60],type=int,default=60);p.add_argument('--countdown',type=int,choices=[0,3,5],default=3);p.add_argument('--value');p.add_argument('--geometry',help=argparse.SUPPRESS);a=p.parse_args()
+ if a.action=='preferences':print(json.dumps(preferences()))
+ elif a.action=='save-preferences':print(json.dumps(preferences(json.loads(a.value))))
+ elif a.action=='review':
+  if reap().get('status') in ACTIVE:raise ValueError('Finish or stop the current recording first.')
+  try:last=json.loads((ROOT/'last.json').read_text())
+  except (OSError,ValueError):raise ValueError('No saved clip is available yet.')
+  if not Path(last.get('output','')).is_file():raise ValueError('The last clip was moved or removed. Open its folder to locate it.')
+  last.update(status='ready',pid=None,error='');atomic(ROOT/'state.json',last);ipc('studio')
+ elif a.action=='worker':worker()
+ elif a.action=='panel':ipc('studio')
+ elif a.action=='status':print(json.dumps(reap()))
+ elif a.action=='elapsed':
+  s=reap();print(max(0,int(time.time()-s.get('started',time.time()))) if s.get('status')=='recording' else 0)
+ elif a.action=='stop':stop()
+ elif a.action in ('toggle','region','timelapse') and read().get('status') in ACTIVE:stop()
+ else:
+  if a.action=='timelapse' and a.mult not in (2,4,8,16):raise ValueError('Choose 2×, 4×, 8× or 16×.')
+  start({'mode':'region' if a.action=='region' else a.mode,'audio':a.audio,'fps':a.fps,'countdown':a.countdown,'speed':a.mult if a.action=='timelapse' else 1,'geometry':a.geometry})
+if __name__=='__main__':
+ try:main()
+ except (OSError,ValueError,subprocess.SubprocessError) as e:print('Aether Studio: '+str(e),file=sys.stderr);sys.exit(1)

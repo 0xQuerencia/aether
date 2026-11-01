@@ -1,0 +1,152 @@
+#!/usr/bin/env python3
+"""Aether's island launch bridge. Falls back to the regular launcher on any warp error."""
+import argparse
+import hashlib
+import json
+import math
+import os
+from pathlib import Path
+import secrets
+import shlex
+import shutil
+import subprocess
+import sys
+import time
+
+HOME=Path.home()
+INSTALL=HOME/'.local/share/aether-warp'
+STATE=Path(os.environ.get('XDG_STATE_HOME',HOME/'.local/state'))/'aether/warp'
+DISPATCH=HOME/'.config/hypr/scripts/hl-dispatch'
+
+
+def ctl(*args):
+    return subprocess.check_output(['hyprctl',*args],text=True,stderr=subprocess.DEVNULL,timeout=3).strip()
+
+
+def status():
+    try:
+        data=json.loads(ctl('aetherwarp','status'))
+        return data if data.get('version')=='1.0' else None
+    except (OSError,ValueError,subprocess.SubprocessError):
+        return None
+
+
+def enabled():
+    try:return json.loads((STATE/'settings.json').read_text()).get('enabled',True)
+    except (OSError,ValueError):return True
+
+
+def load():
+    if status() is not None:return True
+    try:
+        metadata=json.loads((INSTALL/'build.json').read_text())
+        version=json.loads(ctl('-j','version'))
+        binary=INSTALL/'aether-warp.so'
+        if version.get('commit')!=metadata['commit'] or hashlib.sha256(binary.read_bytes()).hexdigest()!=metadata['sha256']:
+            return False
+        ctl('plugin','load',str(binary))
+        return status() is not None
+    except (OSError,ValueError,KeyError,subprocess.SubprocessError):
+        return False
+
+
+def validate_origin(origin):
+    if not isinstance(origin,dict) or not origin.get('enabled',True):return None
+    monitor=origin.get('monitor','')
+    if not isinstance(monitor,str) or not monitor or len(monitor)>100 or any(c.isspace() for c in monitor):return None
+    values=[origin.get(key) for key in ('x','y','w','h')]
+    if not all(type(n) in (int,float) and math.isfinite(n) for n in values):return None
+    x,y,w,h=values
+    if not (-20000<=x<=20000 and -20000<=y<=20000 and 10<=w<=1000 and 4<=h<=200):return None
+    return monitor,values
+
+
+def executable(command):
+    try:
+        words=shlex.split(command)
+        if words and Path(words[0]).name=='env':
+            words=words[1:]
+            while words and ('=' in words[0] or words[0].startswith('-')):words=words[1:]
+        if not words:return None
+        name=shutil.which(words[0]) or words[0]
+        return Path(name).resolve()
+    except (OSError,ValueError):return None
+
+
+def running_targets(command):
+    requested=executable(command)
+    if requested is None:return []
+    classes={requested.name.casefold()}
+    
+    for directory in (HOME/'.local/share/applications',Path('/usr/share/applications'),Path('/usr/local/share/applications')):
+        for path in directory.glob('*.desktop'):
+            try:
+                entry={};inside=False
+                for line in path.read_text().splitlines():
+                    if line.startswith('['):inside=line=='[Desktop Entry]'
+                    elif inside and '=' in line:
+                        key,value=line.split('=',1)
+                        if key in ('Exec','StartupWMClass'):entry[key]=value
+                if entry.get('StartupWMClass') and executable(entry.get('Exec',''))==requested:classes.add(entry['StartupWMClass'].casefold())
+            except (OSError,UnicodeError):pass
+    try:
+        windows=json.loads(ctl('-j','clients'))
+        targets=set()
+        for window in windows:
+            pid=window.get('pid',0)
+            if not isinstance(pid,int) or pid<=0:continue
+            try:same_exe=Path('/proc',str(pid),'exe').resolve(strict=True)==requested
+            except OSError:same_exe=False
+            if same_exe or str(window.get('class','')).casefold() in classes:targets.add(pid)
+        return sorted(targets)[:32]
+    except (OSError,ValueError,subprocess.SubprocessError):return []
+
+
+def launch(command,origin):
+    clean=command
+    armed=None
+    targets=[]
+    parsed=validate_origin(origin)
+    if parsed and enabled() and load():
+        token=secrets.token_hex(16)
+        monitor,values=parsed
+        try:
+            targets=running_targets(command)
+            delay=origin.get('delayMs',0)
+            delay=int(delay) if type(delay) in (int,float) and math.isfinite(delay) and 0<=delay<=1000 else 0
+            reply=ctl('aetherwarp','arm '+token+' '+monitor+' '+' '.join(map(str,values))+' '+str(len(targets))+(' '+' '.join(map(str,targets)) if targets else '')+' '+str(delay))
+            if reply=='ok':clean='env AETHER_WARP_TOKEN='+token+' '+command;armed=token
+        except (OSError,subprocess.SubprocessError):pass
+    
+    subprocess.run([str(DISPATCH),'exec','--',clean],check=True)
+    if armed and targets:
+        
+        
+        time.sleep(.35)
+        try:ctl('aetherwarp','settle '+armed)
+        except (OSError,subprocess.SubprocessError):pass
+
+
+def main():
+    p=argparse.ArgumentParser(description=__doc__)
+    p.add_argument('action',choices=['load','status','on','off','launch'])
+    p.add_argument('origin',nargs='?',default='{}')
+    p.add_argument('command',nargs='?')
+    a=p.parse_args()
+    if a.action=='load':
+        if not load():print('Warp unavailable for this compositor build; normal app launching is preserved.',file=sys.stderr)
+    elif a.action=='status':print(json.dumps({'enabled':enabled(),'plugin':status()}))
+    elif a.action in ('on','off'):
+        STATE.mkdir(parents=True,exist_ok=True,mode=0o700)
+        path=STATE/'settings.json';temp=path.with_suffix('.tmp')
+        temp.write_text(json.dumps({'enabled':a.action=='on'}));temp.chmod(0o600);temp.replace(path)
+    else:
+        if not a.command:raise ValueError('Missing application command')
+        try:origin=json.loads(a.origin)
+        except ValueError:origin={}
+        launch(a.command,origin)
+
+
+if __name__=='__main__':
+    try:main()
+    except (OSError,ValueError,subprocess.SubprocessError) as e:print(str(e),file=sys.stderr);sys.exit(1)

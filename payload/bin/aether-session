@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -euo pipefail
+case "${1:-start}" in
+ stop)
+    systemctl --user stop aether-shell.service aether-live-activities.service aether-continue.service aether-clipboard-text.service aether-clipboard-image.service
+    exit 0 ;;
+ start) ;;
+ *) printf 'Usage: aether-session [start|stop]\n' >&2; exit 2 ;;
+esac
+if systemctl --user is-active --quiet aether-shell.service; then exit 0; fi
+if pgrep -x quickshell >/dev/null || pgrep -x qs >/dev/null; then
+    printf 'Another Quickshell is running. Stop your current shell before starting Aether.\n' >&2
+    exit 1
+fi
+mkdir -p "$HOME/.cache/quickshell/colors"
+if [[ ! -f "$HOME/.cache/quickshell/colors/qs_colors.json" ]]; then
+    cp "$HOME/.config/aether/default-colors.json" "$HOME/.cache/quickshell/colors/qs_colors.json"
+fi
+systemctl --user import-environment WAYLAND_DISPLAY HYPRLAND_INSTANCE_SIGNATURE XDG_CURRENT_DESKTOP XDG_SESSION_TYPE
+systemctl --user daemon-reload
+systemctl --user start aether-shell.service aether-live-activities.service aether-continue.service
+if command -v awww-daemon >/dev/null && ! pgrep -x awww-daemon >/dev/null; then
+    systemctl --user start aether-wallpaper.service
+fi
+
+for type in text image; do
+    if ! pgrep -f "^(/usr/bin/)?wl-paste --type $type --watch cliphist store$" >/dev/null; then
+        systemctl --user start "aether-clipboard-$type.service"
+    fi
+done

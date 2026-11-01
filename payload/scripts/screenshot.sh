@@ -1,0 +1,375 @@
+#!/usr/bin/env bash
+
+
+export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+export PULSE_RUNTIME_PATH="$XDG_RUNTIME_DIR/pulse"
+
+
+# CACHING & MIGRATION
+
+source "$(dirname "${BASH_SOURCE[0]}")/caching.sh"
+
+qs_ensure_cache "screenshot"
+qs_ensure_cache "recording"
+
+
+# DEPENDENCY CHECK
+
+
+if ! command -v notify-send &> /dev/null; then
+    echo "ERROR: notify-send is not installed. Cannot display missing dependencies."
+    exit 1
+fi
+
+
+REQUIRED_CMDS=("gpu-screen-recorder" "grim" "wl-copy" "pactl" "quickshell" "python3")
+MISSING_CMDS=()
+
+for cmd in "${REQUIRED_CMDS[@]}"; do
+    if ! command -v "$cmd" &> /dev/null; then
+        MISSING_CMDS+=("$cmd")
+    fi
+done
+
+if [ ${#MISSING_CMDS[@]} -ne 0 ]; then
+    notify-send -u critical -a "Screenshot System" "Missing Dependencies" "Cannot start. Please install:\n${MISSING_CMDS[*]}"
+    exit 1
+fi
+
+
+shot_preview() {
+    python3 - "$1" "$HOME/.config/hypr/rice-prefs.json" "${XDG_RUNTIME_DIR:-/tmp}/quickshell/island/shot.json" <<'PY'
+import json, os, sys, time
+path, prefs, out = sys.argv[1:4]
+try:
+    if not json.load(open(prefs)).get("shotPreview", True):
+        sys.exit(1)
+except (OSError, ValueError):
+    pass
+os.makedirs(os.path.dirname(out), exist_ok=True)
+tmp = out + ".tmp"
+with open(tmp, "w") as f:
+    json.dump({"path": path, "ts": time.time()}, f)
+os.replace(tmp, out)
+PY
+}
+
+# Directories
+SAVE_DIR="${XDG_PICTURES_DIR:-$HOME/Pictures}/Screenshots"
+RECORD_DIR="${XDG_VIDEOS_DIR:-$HOME/Videos}/Recordings"
+CACHE_DIR="$QS_CACHE_RECORDING"
+mkdir -p "$SAVE_DIR" "$RECORD_DIR"
+
+# Parse arguments safely upfront
+EDIT_MODE=false
+FULL_MODE=false
+RECORD_MODE=false
+SCAN_QR_MODE=false
+GEOMETRY=""
+DESK_VOL="1.0"
+DESK_MUTE="false"
+MIC_VOL="1.0"
+MIC_MUTE="false"
+MIC_DEVICE=""
+
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --edit) EDIT_MODE=true; shift ;;
+        --full) FULL_MODE=true; shift ;;
+        --record) RECORD_MODE=true; shift ;;
+        --scan-qr) SCAN_QR_MODE=true; shift ;;
+        --geometry) GEOMETRY="$2"; shift 2 ;;
+        --desk-vol) DESK_VOL="$2"; shift 2 ;;
+        --desk-mute) DESK_MUTE="$2"; shift 2 ;;
+        --mic-vol) MIC_VOL="$2"; shift 2 ;;
+        --mic-mute) MIC_MUTE="$2"; shift 2 ;;
+        --mic-dev) MIC_DEVICE="$2"; shift 2 ;;
+        *) shift ;;
+    esac
+done
+
+
+if [ "$EDIT_MODE" = false ] && [ "$RECORD_MODE" = false ] && [ "$SCAN_QR_MODE" = false ] \
+   && python3 -c 'import json,sys; sys.exit(0 if json.load(open(sys.argv[1])).get("shotAnnotate", False) else 1)' \
+        "$HOME/.config/hypr/rice-prefs.json" 2>/dev/null; then
+    EDIT_MODE=true
+fi
+
+
+# INSTANT QR SCANNING EXECUTION
+
+if [ "$SCAN_QR_MODE" = true ]; then
+    RES_FILE="$QS_RUN_SCREENSHOT/qr_result"
+    export DEBUG_LOG="$QS_LOG_DIR/qr_debug.log"
+    rm -f "$RES_FILE" "$DEBUG_LOG"
+    
+    echo "=== QR SCAN INITIATED $(date) ===" > "$DEBUG_LOG"
+    
+    if ! command -v zbarimg &> /dev/null; then
+        echo -e "0,0,0,0|||ERROR: zbarimg is not installed. Please install it." > "$RES_FILE"
+        exit 1
+    fi
+
+    TMP_IMG="$QS_RUN_SCREENSHOT/qr_temp_$$.png"
+    grim -g "$GEOMETRY" "$TMP_IMG"
+    
+    export XML_OUT=$(zbarimg --xml -q "$TMP_IMG" 2>>"$DEBUG_LOG")
+    
+    if [ -n "$XML_OUT" ]; then
+        python3 << 'EOF' > "$RES_FILE"
+import os, sys, logging, re
+import xml.etree.ElementTree as ET
+
+debug_log = os.environ.get("DEBUG_LOG", "/tmp/qs_qr_debug.log")
+logging.basicConfig(filename=debug_log, level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
+
+raw_xml = os.environ.get("XML_OUT", "")
+if not raw_xml.strip():
+    print("0,0,0,0|||ERROR: Empty output from zbarimg. See log.")
+    sys.exit(0)
+
+try:
+    xml_clean = re.sub(r'\sxmlns="[^"]+"', '', raw_xml)
+    xml_clean = re.sub(r"\sxmlns='[^']+'", '', xml_clean)
+    tree = ET.fromstring(xml_clean)
+    
+    found_any = False
+    for elem in tree.iter():
+        if elem.tag.endswith('symbol'):
+            found_any = True
+            data_text = ''
+            min_x, min_y, max_x, max_y = float('inf'), float('inf'), -float('inf'), -float('inf')
+            
+            for child in elem:
+                if child.tag.endswith('data'):
+                    data_text = child.text if child.text else ''
+                elif child.tag.endswith('polygon'):
+                    pts_str = child.get('points', '')
+                    if pts_str:
+                        pt_pairs = pts_str.replace('+', '').split(' ')
+                        for pair in pt_pairs:
+                            if ',' in pair:
+                                try:
+                                    x_str, y_str = pair.split(',')
+                                    x, y = int(x_str), int(y_str)
+                                    min_x = min(min_x, x)
+                                    max_x = max(max_x, x)
+                                    min_y = min(min_y, y)
+                                    max_y = max(max_y, y)
+                                except ValueError:
+                                    pass
+            
+            if min_x == float('inf'): min_x, min_y, max_x, max_y = 0, 0, 0, 0
+            w, h = max_x - min_x, max_y - min_y
+            encoded = data_text.replace('\\', '\\\\').replace('\n', '\\n').replace('\r', '')
+            print(f"{int(min_x)},{int(min_y)},{int(w)},{int(h)}|||{encoded}")
+
+    if not found_any: print("0,0,0,0|||NOT_FOUND")
+except Exception as e:
+    print(f"0,0,0,0|||ERROR: XML Parse failure: {e}. Check log.")
+EOF
+    else
+        echo -e "0,0,0,0|||NOT_FOUND" > "$RES_FILE"
+    fi
+    
+    rm -f "$TMP_IMG"
+    exit 0
+fi
+
+
+if [ -f "$CACHE_DIR/rec_pid" ]; then
+    # PREVENT OVERLAPPING EXECUTIONS
+    if [ -f "$CACHE_DIR/processing.lock" ]; then exit 0; fi
+    touch "$CACHE_DIR/processing.lock"
+
+    REC_PID=$(cat "$CACHE_DIR/rec_pid")
+    FINAL_FILE=$(cat "$CACHE_DIR/final_file")
+
+    # stop gpu-screen-recorder
+    [ "$REC_PID" != "0" ] && kill -SIGINT $REC_PID 2>/dev/null
+
+    
+    timeout=30
+    while kill -0 $REC_PID 2>/dev/null && [ $timeout -gt 0 ]; do
+        sleep 0.1
+        timeout=$((timeout - 1))
+    done
+
+    # FORCE KILL IF STUCK
+    [ "$REC_PID" != "0" ] && kill -9 $REC_PID 2>/dev/null
+
+    
+    if [ -f "$CACHE_DIR/pw_modules" ]; then
+        while read -r mod_id; do
+            [ -n "$mod_id" ] && pactl unload-module "$mod_id" 2>/dev/null
+        done < "$CACHE_DIR/pw_modules"
+        rm -f "$CACHE_DIR/pw_modules"
+    fi
+
+    if [ -f "$FINAL_FILE" ]; then
+        (
+            ACTION=$(notify-send -a "Screen Recorder" -i "$FINAL_FILE" -A "default=Open Folder" "⏺ Recording Saved" "File: $(basename "$FINAL_FILE")\nFolder: $RECORD_DIR")
+            if [ "$ACTION" = "default" ]; then
+                if command -v nautilus &> /dev/null; then
+                    nautilus "$RECORD_DIR"
+                else
+                    xdg-open "$RECORD_DIR"
+                fi
+            fi
+        ) &
+    else
+        notify-send -a "Screen Recorder" "❌ Error" "Failed to save the video file."
+    fi
+
+    rm -f "$CACHE_DIR/processing.lock"
+    rm -f "$CACHE_DIR/rec_pid" "$CACHE_DIR/final_file"
+    exit 0
+fi
+
+time=$(date +'%Y-%m-%d_%H-%M-%S')
+FILENAME="$SAVE_DIR/screenshot-$time.png"
+VID_FILENAME="$RECORD_DIR/recording-$time.mp4"
+CACHE_FILE="$QS_CACHE_SCREENSHOT/geometry"
+MODE_CACHE_FILE="$QS_CACHE_SCREENSHOT/video_mode"
+
+rm -f "$CACHE_DIR/processing.lock"
+
+
+if [ "$FULL_MODE" = true ] || [ -n "$GEOMETRY" ]; then
+
+    if [ "$RECORD_MODE" = true ]; then
+        
+        
+        echo -n "" > "$CACHE_DIR/pw_modules"
+
+        DESK_SINK=$(pactl get-default-sink 2>/dev/null)
+        [ -n "$DESK_SINK" ] && DESK_DEV="${DESK_SINK}.monitor" || DESK_DEV=""
+        
+        [ -n "$MIC_DEVICE" ] && [ "$MIC_DEVICE" != "null" ] && MIC_DEV="$MIC_DEVICE" || MIC_DEV=$(pactl get-default-source 2>/dev/null)
+        MIC_DEV="${MIC_DEV:-default}"
+
+
+        if [ -n "$GEOMETRY" ]; then
+            read -r G_XY G_WH <<< "$GEOMETRY"
+            GSR_TARGET=(-w region -region "${G_WH}+${G_XY%,*}+${G_XY#*,}")
+        else
+            FOCUSED_MON=$(hyprctl -j monitors 2>/dev/null | python3 -c "import sys,json; print(next((m['name'] for m in json.load(sys.stdin) if m.get('focused')), ''))" 2>/dev/null)
+            if [ -n "$FOCUSED_MON" ]; then GSR_TARGET=(-w "$FOCUSED_MON"); else GSR_TARGET=(-w portal); fi
+        fi
+        GSR_ARGS=("${GSR_TARGET[@]}" -c "mp4" -f "60" -ac "aac")
+
+        AUDIO_MIX=""
+
+        
+        if [ "$DESK_MUTE" != "true" ] && [ -n "$DESK_DEV" ]; then
+            # Create a virtual sink
+            D_SINK_ID=$(pactl load-module module-null-sink sink_name=qs_virt_desk sink_properties=device.description="QS_Virtual_Desk")
+            
+            D_LOOP_ID=$(pactl load-module module-loopback source="$DESK_DEV" sink=qs_virt_desk)
+            
+            
+            D_VOL_INT=$(awk "BEGIN {print int(${DESK_VOL//,/.} * 65536)}")
+            pactl set-sink-volume qs_virt_desk "$D_VOL_INT"
+            
+            # Save IDs for teardown
+            echo "$D_SINK_ID" >> "$CACHE_DIR/pw_modules"
+            echo "$D_LOOP_ID" >> "$CACHE_DIR/pw_modules"
+            
+            # Append to mixing string
+            AUDIO_MIX="${AUDIO_MIX}qs_virt_desk.monitor|"
+        fi
+
+        
+        if [ "$MIC_MUTE" != "true" ] && [ -n "$MIC_DEV" ]; then
+            
+            M_SINK_ID=$(pactl load-module module-null-sink sink_name=qs_virt_mic sink_properties=device.description="QS_Virtual_Mic")
+            
+            M_LOOP_ID=$(pactl load-module module-loopback source="$MIC_DEV" sink=qs_virt_mic)
+            
+            
+            M_VOL_INT=$(awk "BEGIN {print int(${MIC_VOL//,/.} * 65536)}")
+            pactl set-sink-volume qs_virt_mic "$M_VOL_INT"
+            
+            # Save IDs for teardown
+            echo "$M_SINK_ID" >> "$CACHE_DIR/pw_modules"
+            echo "$M_LOOP_ID" >> "$CACHE_DIR/pw_modules"
+            
+            # Append to mixing string
+            AUDIO_MIX="${AUDIO_MIX}qs_virt_mic.monitor|"
+        fi
+
+        
+        AUDIO_MIX=${AUDIO_MIX%|}
+        if [ -n "$AUDIO_MIX" ]; then
+            GSR_ARGS+=(-a "$AUDIO_MIX")
+        fi
+
+        # Execute gpu-screen-recorder
+        gpu-screen-recorder "${GSR_ARGS[@]}" -o "$VID_FILENAME" > /dev/null 2>&1 &
+        REC_PID=$!
+
+        echo "$REC_PID" > "$CACHE_DIR/rec_pid"
+        echo "$VID_FILENAME" > "$CACHE_DIR/final_file"
+
+        notify-send -a "Screen Recorder" "⏺ Recording Started" "Press your screenshot shortcut again to stop."
+        exit 0
+    fi
+
+    # Mode: Screenshot
+    GRIM_CMD="grim -"
+    [ -n "$GEOMETRY" ] && GRIM_CMD="grim -g \"$GEOMETRY\" -"
+
+    if [ "$EDIT_MODE" = true ]; then
+        if command -v satty &> /dev/null; then
+            eval $GRIM_CMD | GSK_RENDERER=gl satty --filename - --output-filename "$FILENAME" --init-tool arrow --copy-command wl-copy
+        else
+            eval $GRIM_CMD | swappy -f - -o "$FILENAME"
+            [ -s "$FILENAME" ] && wl-copy < "$FILENAME"
+        fi
+    else
+        eval $GRIM_CMD | tee "$FILENAME" | wl-copy
+    fi
+
+    if [ -s "$FILENAME" ] && ! shot_preview "$FILENAME"; then
+        (
+            ACTION=$(notify-send -a "Screenshot" -i "$FILENAME" -A "default=Open Folder" "Screenshot Saved" "File: $(basename "$FILENAME")\nFolder: $SAVE_DIR")
+            if [ "$ACTION" = "default" ]; then
+                if command -v nautilus &> /dev/null; then
+                    nautilus "$SAVE_DIR"
+                else
+                    xdg-open "$SAVE_DIR"
+                fi
+            fi
+        ) &
+    fi
+    exit 0
+fi
+
+
+QML_PATH="$HOME/.config/hypr/scripts/quickshell/ScreenshotOverlay.qml"
+
+if pgrep -f "quickshell -p $QML_PATH" > /dev/null; then
+    pkill -f "quickshell -p $QML_PATH"
+    exit 0
+fi
+
+if command -v pactl &> /dev/null; then
+    export QS_MIC_LIST=$(pactl list sources short 2>/dev/null | awk '{print $2}' | grep -v '\.monitor$' | while IFS= read -r name; do
+        desc=$(pactl list sources 2>/dev/null | awk -v n="$name" '/Name:/ { found = ($2 == n) } found && /Description:/ { sub(/^[[:space:]]*Description:[[:space:]]*/, ""); print; exit }')
+        echo "$name|${desc:-$name}"
+    done)
+else
+    export QS_MIC_LIST=""
+fi
+
+PREFS="$QS_STATE_SCREENSHOT/audio_prefs"
+if [ -f "$PREFS" ]; then
+    IFS=',' read -r QS_DESK_VOL QS_DESK_MUTE QS_MIC_VOL QS_MIC_MUTE QS_MIC_DEV < "$PREFS"
+    export QS_DESK_VOL QS_DESK_MUTE QS_MIC_VOL QS_MIC_MUTE QS_MIC_DEV
+fi
+
+[ "$EDIT_MODE" = true ] && export QS_SCREENSHOT_EDIT="true" || export QS_SCREENSHOT_EDIT="false"
+[ -f "$CACHE_FILE" ] && export QS_CACHED_GEOM=$(cat "$CACHE_FILE") || export QS_CACHED_GEOM=""
+[ -f "$MODE_CACHE_FILE" ] && export QS_CACHED_MODE=$(cat "$MODE_CACHE_FILE") || export QS_CACHED_MODE="false"
+
+quickshell -p "$QML_PATH"

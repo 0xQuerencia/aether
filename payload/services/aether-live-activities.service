@@ -1,0 +1,13 @@
+[Unit]
+Description=Aether island timers and headphone activities
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+ExecStart=%h/.local/bin/aether-island-activities daemon
+Restart=on-failure
+RestartSec=2
+Environment=PATH=/usr/bin:/bin:%h/.local/bin
+
+[Install]
+WantedBy=graphical-session.target

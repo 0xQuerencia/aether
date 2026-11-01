@@ -1,0 +1,690 @@
+{
+  "payload/bin/aether-continue": {
+    "sha256": "c362b057b9c21bcd5df5520f4b690aa9c675ef3ea5797297efa4bb6c63279a90",
+    "mode": "0o755"
+  },
+  "payload/bin/aether-continue-browser": {
+    "sha256": "c95ee243b949795038ec740324b370cde15210402eee90157c655dfbf5c2a4fb",
+    "mode": "0o755"
+  },
+  "payload/bin/aether-displays": {
+    "sha256": "ff59e00a24c84a52e21d25eb41b471abe395ae19223690ef4c7b939a87483099",
+    "mode": "0o755"
+  },
+  "payload/bin/aether-drop": {
+    "sha256": "b03174398de5507a85f0277ab51cbc7dfe6303be1b68fd19559f8b15aea67b3d",
+    "mode": "0o755"
+  },
+  "payload/bin/aether-fold": {
+    "sha256": "3d9eff3ca52b8df938f20e6ab8c1cf35fcc3bfb5ad7fbd11fe1443e55544a5e3",
+    "mode": "0o755"
+  },
+  "payload/bin/aether-island-activities": {
+    "sha256": "c74a2cde2823ef44415c2cedbe66a52c350214b1678fae7d57f93ca1b68b8226",
+    "mode": "0o755"
+  },
+  "payload/bin/aether-pin": {
+    "sha256": "dca6002d63aeff8fe4d21bbd1bc1895d64b57f460409a76389a27e3fd98804b2",
+    "mode": "0o755"
+  },
+  "payload/bin/aether-session": {
+    "sha256": "a40f85212c54ad14cbd1f5bc6b6ff8c40e6295db1bd3721f50180e44c6f46404",
+    "mode": "0o755"
+  },
+  "payload/bin/aether-share": {
+    "sha256": "f643d7d1e73aa3b267286ceb4824c1436b984900adfca9ccdbc28b522ab22bef",
+    "mode": "0o755"
+  },
+  "payload/bin/aether-studio": {
+    "sha256": "2c5f017b4a3771c701985ddd6e4afd52c539f83f4204d268460dd1920d957606",
+    "mode": "0o755"
+  },
+  "payload/bin/aether-task": {
+    "sha256": "efdcccfb3d94c99d4956549fa796c60489c3077228a0bf619297d84174de500e",
+    "mode": "0o755"
+  },
+  "payload/bin/aether-timer": {
+    "sha256": "ba0f6c081fddfd166340ee96da29df2fe09f6ffe2630426d4f2c4732498adf6a",
+    "mode": "0o755"
+  },
+  "payload/bin/aether-warp": {
+    "sha256": "6d1dab1f6717b635efb361894984f76ca61f9fc51de1d32e14b970b1afd4ca67",
+    "mode": "0o755"
+  },
+  "payload/config/aether/default-colors.json": {
+    "sha256": "9885ec86763ced1bb1d2599898997126290883f6828408dc9f3ff350ace71003",
+    "mode": "0o644"
+  },
+  "payload/config/aether/integration.lua": {
+    "sha256": "24d516f3f1b85786bf529a58d827293acdc6b1a51226af041197c70c78dc956f",
+    "mode": "0o644"
+  },
+  "payload/config/aether/matugen/colors.json.template": {
+    "sha256": "30cfe2de488ecaa3f4754e521f27158de7f8768a521298f166cb2f9ac3324a64",
+    "mode": "0o644"
+  },
+  "payload/config/aether/matugen/config.toml": {
+    "sha256": "e5ea52a3e87016e5c6266219da56b52c58f205c02261c3aa03877cc77564e6d5",
+    "mode": "0o644"
+  },
+  "payload/config/aether/palettes.json": {
+    "sha256": "69f9c73c54b22038ccbddb5630a1fc962498aa35c83d893b04193b8a70fe9474",
+    "mode": "0o644"
+  },
+  "payload/config/aether/settings.json": {
+    "sha256": "21203c1d19b08eba62b6fafad1816e99e30550d7817224f96fc783cd609d2a2d",
+    "mode": "0o644"
+  },
+  "payload/scripts/aether-radios.py": {
+    "sha256": "8c9d56d17c1a43ff3eb8dd82c952e59699029eac03779f5106a179219e29af92",
+    "mode": "0o755"
+  },
+  "payload/scripts/aether-sync-apps.py": {
+    "sha256": "c31012cc57bede3ed74025c38142d28d9a11ac05a1e798dd10853f9a2b7f8d14",
+    "mode": "0o755"
+  },
+  "payload/scripts/aether-theme.py": {
+    "sha256": "1a8ad70920e46f423b82646a07f13dec6e47a6b822e207ae125c16392c2fcb54",
+    "mode": "0o755"
+  },
+  "payload/scripts/caching.sh": {
+    "sha256": "63b1747a6b7cd02d20eadd89871412441c7ad12ce97470751b8aee5482c72f73",
+    "mode": "0o755"
+  },
+  "payload/scripts/change-wallpaper.sh": {
+    "sha256": "687e59665589cb87a548e9994e1c4923b2d9e3c589e4a7029bbf4f810d7d8a7b",
+    "mode": "0o755"
+  },
+  "payload/scripts/hl-dispatch": {
+    "sha256": "ae000d657c478afbe8eb2c8477373759b3566227412ddb4fd0f840392e513493",
+    "mode": "0o755"
+  },
+  "payload/scripts/hl-set": {
+    "sha256": "694ac5ac9347a9d10d458f6f58a9814a91689b2d9f7c708251db533fd6c73eb2",
+    "mode": "0o755"
+  },
+  "payload/scripts/island-ambient.sh": {
+    "sha256": "c6ec60b28ba4420ed1b625d7a47a7184049d2176a7baab096e75cc5886c02a8d",
+    "mode": "0o755"
+  },
+  "payload/scripts/island-caffeine.sh": {
+    "sha256": "3289a1d5f9aa2da03d3242dbc7d27ca1a4dbf9ce76492aa49387c3f82d7b9933",
+    "mode": "0o755"
+  },
+  "payload/scripts/island-record.sh": {
+    "sha256": "100ad91493ba9d2e382afbb1717352940de93a611bc6820dde59c34419a3ef94",
+    "mode": "0o755"
+  },
+  "payload/scripts/island-screenshot.sh": {
+    "sha256": "4256dc325f2790720fd3db4705876f0d92de6e0f75f11c904d33f5278bd7ed33",
+    "mode": "0o755"
+  },
+  "payload/scripts/island-ws-thumbs.sh": {
+    "sha256": "94dab92530551ff500a6ae2a7803f3d87dea3d14b914940961ed719920db170f",
+    "mode": "0o755"
+  },
+  "payload/scripts/lock.sh": {
+    "sha256": "90758c8f9125bc88ecc72825c23b59bca5db99ca844dca6c479512c252b7a466",
+    "mode": "0o755"
+  },
+  "payload/scripts/music-toggle.sh": {
+    "sha256": "cfa41e03853ea72288b2a7f870542467e4ecd5f696dbaa45f45188aca059862c",
+    "mode": "0o755"
+  },
+  "payload/scripts/osd.sh": {
+    "sha256": "b9cbf701638d88f6f308b55bc77dbcbbf555f8e8151182bad97957c4ab741005",
+    "mode": "0o755"
+  },
+  "payload/scripts/screenshot.sh": {
+    "sha256": "de04a157caaccb296add59b3fbb2a2f011177e906017a393db9d93296e938aa5",
+    "mode": "0o755"
+  },
+  "payload/services/aether-clipboard-image.service": {
+    "sha256": "3bac533adccab3208501c35a9069fdb366366f01775129d71f0200a1ae9ef1de",
+    "mode": "0o644"
+  },
+  "payload/services/aether-clipboard-text.service": {
+    "sha256": "45096d2589fa742582e931a3302dc59c4caee54cde8671fcb41cd32f3864672a",
+    "mode": "0o644"
+  },
+  "payload/services/aether-continue.service": {
+    "sha256": "765be298f505273b7290e1c23f7e623d9bdf3eee8e0c538633bf6f7ac7188f39",
+    "mode": "0o644"
+  },
+  "payload/services/aether-live-activities.service": {
+    "sha256": "1bcc793792c3d5cb4efdfa6a60a105e0f6b81da38dfcb036459aedf6ed367f5b",
+    "mode": "0o644"
+  },
+  "payload/services/aether-shell.service": {
+    "sha256": "6e82bbbd1e0d9e21eb5ad0cbe4595f117119858859c58f602a1944c253ab57ac",
+    "mode": "0o644"
+  },
+  "payload/services/aether-wallpaper.service": {
+    "sha256": "1afda3c6877b5a0ac3461e7c3d8c78e1291067869463434a2a5a62aa57dc1a27",
+    "mode": "0o644"
+  },
+  "payload/shell/AetherButton.qml": {
+    "sha256": "978d935566b9863b646c190d6ffef0eeb2e24b111273e3cd6b3ce4d2444160dc",
+    "mode": "0o644"
+  },
+  "payload/shell/AetherField.qml": {
+    "sha256": "25630560e4bdb12d207a41bd5527e3159b1ef7577ee4219d6ab17c5959e9cd74",
+    "mode": "0o644"
+  },
+  "payload/shell/AetherMessage.qml": {
+    "sha256": "aa2da44df96692cfd178cdf83d4d42855733b583bc0eb0656cb07538973469a9",
+    "mode": "0o644"
+  },
+  "payload/shell/AetherStyle.qml": {
+    "sha256": "9967c59a25539f1225d7be0af6e646006bc5ab350d1f07cdfc038c3ccf9a27e5",
+    "mode": "0o644"
+  },
+  "payload/shell/Caching.qml": {
+    "sha256": "c626e55fc373a632144caff18247b62e87b8e7beacea15f6c67cebd5b034a797",
+    "mode": "0o644"
+  },
+  "payload/shell/Continuity.qml": {
+    "sha256": "081e180d25f3c34255b0982d7f98217667aa2b6c2d291f4c04e57de52cf82284",
+    "mode": "0o644"
+  },
+  "payload/shell/Displays.qml": {
+    "sha256": "6743bea9f45b22c389446f1bc4928cecd4d199d7d097e9b208ded22c7263ec2d",
+    "mode": "0o644"
+  },
+  "payload/shell/FlipTile.qml": {
+    "sha256": "28028eeefbef54ed89f064d3222ffd9ee07c95ffce6e0a11e95ffb76634049be",
+    "mode": "0o644"
+  },
+  "payload/shell/FoldedWindows.qml": {
+    "sha256": "5f50f4e58b18c4b85ac937171354635ed53bb5d0b30682e5d39692de04e1776d",
+    "mode": "0o644"
+  },
+  "payload/shell/HeadphoneProduct.qml": {
+    "sha256": "2752d171d7c404ea8d933795a7b8ad27758c51fb72b73337e02a69b0db1dae37",
+    "mode": "0o644"
+  },
+  "payload/shell/Island.qml": {
+    "sha256": "7bcdd19c91633d02c487cec8e3847d952c67ec0bec461afe97c1d798340e3a55",
+    "mode": "0o644"
+  },
+  "payload/shell/IslandAppTail.qml": {
+    "sha256": "1905af570cae8ccc915487df920051cf8155fb810a14a25413e8430a38a351ad",
+    "mode": "0o644"
+  },
+  "payload/shell/IslandRegistry.qml": {
+    "sha256": "08a43c8cb0650ad26c22b9bf220b2da891af7b5a86a888b719c3ae367ca9bc62",
+    "mode": "0o644"
+  },
+  "payload/shell/LiveActivities.qml": {
+    "sha256": "b9887c74a3d85f551c86cd375a73395b501c17cc700fb25ee7a720d3668411a9",
+    "mode": "0o644"
+  },
+  "payload/shell/Lock.qml": {
+    "sha256": "a04f6435b425155636d3ca14e13d9076cbaa2167ace301c2e5201eb8ae24eee8",
+    "mode": "0o644"
+  },
+  "payload/shell/LockPreview.qml": {
+    "sha256": "40e739b6cf7897a346cc8c51e06a13ee596c2ca91d736c3d8b4677723b6523ec",
+    "mode": "0o644"
+  },
+  "payload/shell/LockView.qml": {
+    "sha256": "7c5fbb89e25c2dd61646c53fa94d8be6e141aaecabcd87b545517fb9135e5064",
+    "mode": "0o644"
+  },
+  "payload/shell/MatugenColors.qml": {
+    "sha256": "1c1448d68607484748d1fabd36f9b4211f22e72a59983d22e2069709ac213e66",
+    "mode": "0o644"
+  },
+  "payload/shell/MinimizedDock.qml": {
+    "sha256": "d6b284caf1e9bc62cf6e9348a7649826a9808714f0e93bbdc80251b9c53c0734",
+    "mode": "0o644"
+  },
+  "payload/shell/Notifs.qml": {
+    "sha256": "8fb64a96abd0269200497541d9f157c000ae9bec21b40792c5c38da5528de1c5",
+    "mode": "0o644"
+  },
+  "payload/shell/OriginalIsland.qml": {
+    "sha256": "9aed79fadc9b152f0481a2b6d428076873a2f3082cc0c6450f4e90d2a983db6c",
+    "mode": "0o644"
+  },
+  "payload/shell/PalettePicker.qml": {
+    "sha256": "bcfd64f2b0fc566fe091b1d4a38c2d605995d5c67194a79bd8340acb88b0a5a8",
+    "mode": "0o644"
+  },
+  "payload/shell/PanelReveal.qml": {
+    "sha256": "b7c9e224b983c17c415605dda181186cf1fced7a04514b05822dd511efbbc68a",
+    "mode": "0o644"
+  },
+  "payload/shell/Pins.qml": {
+    "sha256": "bc5a412e506b1c1927e5e68618f5a6234e3986356fd0c289176d4d5f112dceb1",
+    "mode": "0o644"
+  },
+  "payload/shell/PixelIcon.qml": {
+    "sha256": "81e50b3b78f63f4b89fbf0067b6262af8f38d67f49882271c3bae7f060e600db",
+    "mode": "0o644"
+  },
+  "payload/shell/PowerOverlay.qml": {
+    "sha256": "43b1bd395c15eeccb8f62559ffa80b511b12eb24ae64ef0fbe5738090afabec0",
+    "mode": "0o644"
+  },
+  "payload/shell/Prefs.qml": {
+    "sha256": "aa553b7a0bc4592143c28f62c14ff8b3bcfd0675c79e83155da9dc4316ddd388",
+    "mode": "0o644"
+  },
+  "payload/shell/PressScale.qml": {
+    "sha256": "a2ee4b69061faa299d1f561a8bb3cb0c18a170933c6fec0758c6ef17833241af",
+    "mode": "0o644"
+  },
+  "payload/shell/Scaler.qml": {
+    "sha256": "f52712c9688f4019c1944257e0fa4353d69d6dbd73982c9ace4b55cad167e20e",
+    "mode": "0o644"
+  },
+  "payload/shell/ScreenPins.qml": {
+    "sha256": "017dc7b53e4eaddc56a696bce31324e7d02d3b015804e6f13b18bd129ff0faae",
+    "mode": "0o644"
+  },
+  "payload/shell/ScreenshotOverlay.qml": {
+    "sha256": "1d5359c5320ed080dd5a9a82f36f8ce92ab45b8d00eef846b33afc192988a69d",
+    "mode": "0o644"
+  },
+  "payload/shell/SettingsWindow.qml": {
+    "sha256": "ad8e4b039a7c41354c7b2b21f24a4af4a5a29b1debd3036191f6cea32d8f9151",
+    "mode": "0o644"
+  },
+  "payload/shell/Shell.qml": {
+    "sha256": "ff9e4721bec0261e7e415db5e6f175ca39b5002770a43af1ae216648f6e2a868",
+    "mode": "0o644"
+  },
+  "payload/shell/SysData.qml": {
+    "sha256": "0652eca5ba7fcda45b491e22b8f875c2e73a898d1b8f2cc7866040c1913689ca",
+    "mode": "0o644"
+  },
+  "payload/shell/TaskManager.qml": {
+    "sha256": "76ca54dbe304b71b6cd15a6cdeb8978bee4772a355c28da7f55cf195a6689325",
+    "mode": "0o644"
+  },
+  "payload/shell/Tasks.qml": {
+    "sha256": "52633552b700d27720e3187bfe3294f406200fa6d12c9b61b8b0731f06add4ec",
+    "mode": "0o644"
+  },
+  "payload/shell/WindowRegistry.js": {
+    "sha256": "0a9cadea7764abea26828dd29d96a437f14b68adad4b96c39a7bf41abc5647cf",
+    "mode": "0o644"
+  },
+  "payload/shell/WorkspaceLogic.js": {
+    "sha256": "a1309667c1bc5227ec622ef4299344cb932ddcc2a4b1892538401b03bcff59a5",
+    "mode": "0o644"
+  },
+  "payload/shell/WorkspaceOverview.qml": {
+    "sha256": "fd7b6ec1611ac8f4b6727f6fe75dfd1ef7130af4fd97c08862fa44051bd3cec7",
+    "mode": "0o644"
+  },
+  "payload/shell/applauncher/app_fetcher.py": {
+    "sha256": "6b2b2ff449dcee7744b88f07fed05f8ac6dd976e62c73d1a1ed705151f78828c",
+    "mode": "0o644"
+  },
+  "payload/shell/applauncher/launcher_query.py": {
+    "sha256": "78934b2edfaaf4015c8e0a6d3117a93cc3258951d5091462314bf97d0c256006",
+    "mode": "0o644"
+  },
+  "payload/shell/assets/headphones/SOURCES.md": {
+    "sha256": "79a701837bab8cbbab134ec187358b767ea847ded5c9c790c4870d4535039902",
+    "mode": "0o644"
+  },
+  "payload/shell/bt_list.sh": {
+    "sha256": "8490b82b9223b9c0efa0c46716f20e7f6094b66b5082617aa377e273897bb327",
+    "mode": "0o755"
+  },
+  "payload/shell/calendar/.env.example": {
+    "sha256": "1d6603f6d679b2ee7f83e6f4f46e8b22745563b5830518d49eeac92118557d56",
+    "mode": "0o644"
+  },
+  "payload/shell/calendar/weather.sh": {
+    "sha256": "95d36ceea98f85c578b5d291ae6608b05a7965a7ef7277d28d337a2766f45546",
+    "mode": "0o755"
+  },
+  "payload/shell/clipboard/clip_fetcher.py": {
+    "sha256": "e75d480995c5ac6c527d01eac7b95995ab7a6a1d513086ecfc444ddd20e58e77",
+    "mode": "0o755"
+  },
+  "payload/shell/clipboard/clip_pins.py": {
+    "sha256": "3dc37787fb973ba866616f0dbf6398dfc22eb1038a3d5c36a3c0ecc69e0edccb",
+    "mode": "0o755"
+  },
+  "payload/shell/colors.json.template": {
+    "sha256": "30cfe2de488ecaa3f4754e521f27158de7f8768a521298f166cb2f9ac3324a64",
+    "mode": "0o644"
+  },
+  "payload/shell/emoji/build_emoji_data.py": {
+    "sha256": "78f9266bc7eae5c1c925048a636a0ff7fdca1af0197dc45f8f7d39a49e9d5b21",
+    "mode": "0o644"
+  },
+  "payload/shell/emoji/emoji-data.json": {
+    "sha256": "60ea90758dcd439004384caa64a7ec675e217e3ea7c4c265ca8111b16f620f48",
+    "mode": "0o644"
+  },
+  "payload/shell/emoji/emoji-insert.py": {
+    "sha256": "9f8295d8de548f8e88d387ed3b519cf6501fc8ae49da13f9b28430a7eaa1a3cb",
+    "mode": "0o644"
+  },
+  "payload/shell/emoji/emoji_fetcher.py": {
+    "sha256": "e36458011a278122ebcad3ab7ae6acb7bd68468b4315982501f7ae67e3e329e1",
+    "mode": "0o755"
+  },
+  "payload/shell/emoji/emoji_store.py": {
+    "sha256": "76616fe5845ba43384b998ff9e8f927f5309016c7015d525cfb9e7b335d88d15",
+    "mode": "0o755"
+  },
+  "payload/shell/music/music_info.sh": {
+    "sha256": "a38539765a6c42cfbe9cd76358c6209e2c1f179fea75504d1a9870ce7dbacfed",
+    "mode": "0o755"
+  },
+  "payload/shell/music/player_control.sh": {
+    "sha256": "776add32dc575b03eef341ee4f71e112c4bcfbee14a6abe75b3e66f65fb0a39e",
+    "mode": "0o755"
+  },
+  "payload/shell/network/sounds/connect.wav": {
+    "sha256": "c710384bf6d9e177f6b3d285e542fff5a5ee508efeb9235b1e4fba9f6b4cf255",
+    "mode": "0o644"
+  },
+  "payload/shell/network/sounds/disconnect.wav": {
+    "sha256": "8ef437614f09482c02fce224c98ca9b602e7fb85c730f2924d2ca44b4fdbdc9f",
+    "mode": "0o644"
+  },
+  "payload/shell/network/sounds/power_off.wav": {
+    "sha256": "761a651ebee7579e941e9e19c11832ab504d74aa1f4193274fa211e95337c34e",
+    "mode": "0o644"
+  },
+  "payload/shell/network/sounds/power_on.wav": {
+    "sha256": "2648911be48a5c4789ea0fb6a492a17363c95d3e60a6020118afecb9d211fd0d",
+    "mode": "0o644"
+  },
+  "payload/shell/network/sounds/switch.wav": {
+    "sha256": "326b9f598cd89eb1f96fffa31b5188eb150a3d53ec50b6aeaf51f2b3b5756a1a",
+    "mode": "0o644"
+  },
+  "payload/shell/panels/AetherSendPanel.qml": {
+    "sha256": "37ad60710d15f5a835ba7daa1622a5f40f8357b227b17c7731c248274cf76d07",
+    "mode": "0o644"
+  },
+  "payload/shell/panels/AmbientPanel.qml": {
+    "sha256": "afceda22488c442d84d85a2169dbf106cc15cbf441f461fb83869223306e1c22",
+    "mode": "0o644"
+  },
+  "payload/shell/panels/BatteryToastPanel.qml": {
+    "sha256": "d0e4e15d427b76f76a4f72fa71d718d7ee759a6c4d998e80a87bbf8b008bed84",
+    "mode": "0o644"
+  },
+  "payload/shell/panels/BluetoothPanel.qml": {
+    "sha256": "e23c73657f0966a7aa65c7ff610ac953b6f319348477dcf9b20e59db7d693534",
+    "mode": "0o644"
+  },
+  "payload/shell/panels/CalendarPanel.qml": {
+    "sha256": "2fd86effd9c1e0cc0ab76c8a75c42133834c5a1f48ab608c2bbc8187c75e003c",
+    "mode": "0o644"
+  },
+  "payload/shell/panels/ClipboardPanel.qml": {
+    "sha256": "4f475210ba091971ea6e878f2fb0f1f51367b341279681177ead19d621d73485",
+    "mode": "0o644"
+  },
+  "payload/shell/panels/ContinuePanel.qml": {
+    "sha256": "4390bd6b2d95754cb8f5deadf6d270b390ebe2b91cc1e43438edb51097c699c7",
+    "mode": "0o644"
+  },
+  "payload/shell/panels/ControlPanel.qml": {
+    "sha256": "ff584cfd35244b4b8f09cd824bc1171cd85ff336f4d945a04d1e3b215faea02b",
+    "mode": "0o644"
+  },
+  "payload/shell/panels/DisplayPanel.qml": {
+    "sha256": "caf525ab62baa793b1714e4c8f4758c4111bee7109aac8eb79a3376c08cf5ebe",
+    "mode": "0o644"
+  },
+  "payload/shell/panels/DropPanel.qml": {
+    "sha256": "e91090530ec7fd5b090537e2025d41090d3014e07bde2ae107d1a7908abd092b",
+    "mode": "0o644"
+  },
+  "payload/shell/panels/EmojiPanel.qml": {
+    "sha256": "06524af34a7c02cd340ce9338a1fb164140e39d78396fb8808afa669243cc8ae",
+    "mode": "0o644"
+  },
+  "payload/shell/panels/FoldShelfPanel.qml": {
+    "sha256": "899aad577ae125c248759fb1a5c1a8eecdfab31ffc944549efc4cd6f934ea53c",
+    "mode": "0o644"
+  },
+  "payload/shell/panels/HeadphonePanel.qml": {
+    "sha256": "09fd2d5aad21e22a6076524657e0780b771bfb6bdd3edf0b548d8f97221dc977",
+    "mode": "0o644"
+  },
+  "payload/shell/panels/LauncherPanel.qml": {
+    "sha256": "7ab54c58f9e8a998a365ad15f75152d36a770aefc57afbf375961235ef56eab3",
+    "mode": "0o644"
+  },
+  "payload/shell/panels/MediaPanel.qml": {
+    "sha256": "8b1fdec371744cb41e3b7158baddd82e9b125d6682d9dd4050683acd82699895",
+    "mode": "0o644"
+  },
+  "payload/shell/panels/NotifHistPanel.qml": {
+    "sha256": "2ab8f8664d462b453ceea6af175c0472ab142cc18fcc4cbf159a6aa6556d2e72",
+    "mode": "0o644"
+  },
+  "payload/shell/panels/NotificationCard.qml": {
+    "sha256": "99e60f785ac12d79afbc4007697bfc7de37a3499354bb06fb888722b219b5af5",
+    "mode": "0o644"
+  },
+  "payload/shell/panels/OsdBar.qml": {
+    "sha256": "c28cb68821b2f4b479c1006963ca722ea61941bb014dc873ef662aaafb53d65c",
+    "mode": "0o644"
+  },
+  "payload/shell/panels/OverviewPanel.qml": {
+    "sha256": "eff8f155c51e4d1c960a307583003e67ccfee800671144b9eda3580ca58b0598",
+    "mode": "0o644"
+  },
+  "payload/shell/panels/PolkitPanel.qml": {
+    "sha256": "5700d28c9839bed8110fbef83a9c53f8b1bf73db2bbce5dc5071f3be33b2d3dd",
+    "mode": "0o644"
+  },
+  "payload/shell/panels/PomodoroPanel.qml": {
+    "sha256": "e3a589860ee7d709c7684775b96316d1af1752d7b57fb29747ee09a0807c3281",
+    "mode": "0o644"
+  },
+  "payload/shell/panels/PowerPanel.qml": {
+    "sha256": "8a278ce21d5f5bde975db39cb9d952f215d1b479bf15b122bffe1941c7caf780",
+    "mode": "0o644"
+  },
+  "payload/shell/panels/RecordMenuPanel.qml": {
+    "sha256": "1b51b01276d9ddd25dbed95c08858f2788241a8e0e73fe019424520e8779784d",
+    "mode": "0o644"
+  },
+  "payload/shell/panels/ScratchpadPanel.qml": {
+    "sha256": "3188d609e8ab4eaa45b7535021c7e319667407d31730cbd00abb17f8b82ceafd",
+    "mode": "0o644"
+  },
+  "payload/shell/panels/ShotPanel.qml": {
+    "sha256": "bbdf2f3424ff58a4e5df4d7fda0da0fce6c8c381c2b939c3e7f4f8bac8b46c11",
+    "mode": "0o644"
+  },
+  "payload/shell/panels/SideMeters.qml": {
+    "sha256": "f710f04b0acf086e043a4963f8c7c287a8286c88af3b0cf6970ae25781c35b3b",
+    "mode": "0o644"
+  },
+  "payload/shell/panels/SideWorkspaces.qml": {
+    "sha256": "9e571bb538fc3d047fb0f4c3910d6f3e62e6b2fc0f56f6021df301262f73913b",
+    "mode": "0o644"
+  },
+  "payload/shell/panels/SoundPanel.qml": {
+    "sha256": "785e620e77521add2f013ec29416f39e10c4dd66b07f9cc4767a7e9e554264b0",
+    "mode": "0o644"
+  },
+  "payload/shell/panels/StatsPanel.qml": {
+    "sha256": "3e96295f57ed079eaa5bdd4607b8aa61107b24fcb477c585bc44099b519b81e3",
+    "mode": "0o644"
+  },
+  "payload/shell/panels/TaskPanel.qml": {
+    "sha256": "436f0ebeddd6595f74f11face6e13acb09ca93863455c7f3583ed13c16308fe9",
+    "mode": "0o644"
+  },
+  "payload/shell/panels/TimerClockPanel.qml": {
+    "sha256": "49473a269c4c09e095ca1b53f534962af4d57c84a42bb3cc62601a88577c5c45",
+    "mode": "0o644"
+  },
+  "payload/shell/panels/TimerPanel.qml": {
+    "sha256": "d43ab62708d72d84b487bcf0ec0abdfdc1e42b5a7593352618ece3e33b149bfd",
+    "mode": "0o644"
+  },
+  "payload/shell/panels/WallpaperPanel.qml": {
+    "sha256": "7876ccc70bdc7f921df0654cfc28712b7fd0ae32933692ad2546dfeea2d85942",
+    "mode": "0o644"
+  },
+  "payload/shell/panels/WifiPanel.qml": {
+    "sha256": "cb0da9b02b44bf0549cf083949d5efa0d3098adc337bef959e1cd5d5522d2a6d",
+    "mode": "0o644"
+  },
+  "payload/shell/panels/wheelstep.js": {
+    "sha256": "5505260b32b7a868ce2b33891caeed675c92d66fd3cba593cadaa9885c707114",
+    "mode": "0o644"
+  },
+  "payload/shell/pomodoro/bell.ogg": {
+    "sha256": "c5d122e2c9e8988944a9954623fa593ccecc9d0d8511486f5c62df868b2bbd77",
+    "mode": "0o644"
+  },
+  "payload/shell/qmldir": {
+    "sha256": "ad5054d4745987e5e762511004956d7dc0f9c6fbdd34ec30db6e9871e57236e7",
+    "mode": "0o644"
+  },
+  "payload/shell/settings/BluetoothPage.qml": {
+    "sha256": "dd46d6ced7511d6868b2557990db73d67f52ee18d4ac0054b1fc2ee76a51b024",
+    "mode": "0o644"
+  },
+  "payload/shell/settings/WifiPage.qml": {
+    "sha256": "ab416cb2ddafb728ade1698fd900190a9ce73ed71f33d7a1b0d64f688965164e",
+    "mode": "0o644"
+  },
+  "payload/shell/settings/hyprset.py": {
+    "sha256": "1f6aabe8da01e3b1ebdf4e87e01362997cd2efc1eeb7a455d0b40fb9defabaf1",
+    "mode": "0o755"
+  },
+  "payload/shell/settings/netctl.py": {
+    "sha256": "4f6683f97b441e555ed82e5f2db76126f48d38ded51f7485850d93864c77360c",
+    "mode": "0o644"
+  },
+  "payload/shell/settings/qmldir": {
+    "sha256": "ea70478f0a20ceb103978b42773fd72e5a8f4efb5f61f929ef292eefc432e3d2",
+    "mode": "0o644"
+  },
+  "payload/shell/taskmgr/OverviewPage.qml": {
+    "sha256": "bb721e450a13c962bc802560334ff31f4fb7fb87b4e77c6f335dd9977b199928",
+    "mode": "0o644"
+  },
+  "payload/shell/taskmgr/ProcessesPage.qml": {
+    "sha256": "4ea0db40de0a89f14cee0ed6a9c63ba609e21d131c799414269b7fa88f571641",
+    "mode": "0o644"
+  },
+  "payload/shell/taskmgr/components/Sparkline.qml": {
+    "sha256": "eab2711efbae392eb2724e825bb529a5254578b6de207bcfaaa9b901f79d56dd",
+    "mode": "0o644"
+  },
+  "payload/shell/taskmgr/components/TaskCard.qml": {
+    "sha256": "2338ba2378bf3e60df7dcfa044222b228e691b0bb63ffdf0364cbdd99df10138",
+    "mode": "0o644"
+  },
+  "payload/shell/taskmgr/components/UsageBar.qml": {
+    "sha256": "fd4886b618c0f93e83ded65e5b1dcb54c6e922312ecca93a5ada2395873e4b7f",
+    "mode": "0o644"
+  },
+  "payload/shell/taskmgr/components/qmldir": {
+    "sha256": "42a1fe980c4c85b2079c523ada64ee30befdd936641624b40f6847f8139648f4",
+    "mode": "0o644"
+  },
+  "payload/shell/taskmgr/qmldir": {
+    "sha256": "9692aad5940b0a09c4778a21ec9601a5baaf5b2522f2a126bd105af9e8836291",
+    "mode": "0o644"
+  },
+  "payload/shell/taskmgr/sysmon.py": {
+    "sha256": "0a2aa99c7199b94667d0b49395618cc93abaaae38c530fb285aadbdaf476896a",
+    "mode": "0o755"
+  },
+  "payload/shell/volume/get_audio_state.py": {
+    "sha256": "829af797a920e1205cb240dc652ef9a1c15e8bde70e6881e3edd95258e0789a9",
+    "mode": "0o755"
+  },
+  "payload/shell/wallpaper/matugen_reload.sh": {
+    "sha256": "e0f99a6f14e11b85ef604445e24e11d7193a3f0a8fed3d1964880088017f9b1a",
+    "mode": "0o755"
+  },
+  "payload/shell/wallpaper/palette-preview.py": {
+    "sha256": "cb33e7699795a73aa420aa637db66d8e947087be12848757f4d05de7ba6aea01",
+    "mode": "0o755"
+  },
+  "payload/shell/watchers/audio_fetch.sh": {
+    "sha256": "9ebf6f019c72bb2d7a12f5d17c7c7ee04192f0d06cc6fc8a6b16fa6e987f8db7",
+    "mode": "0o755"
+  },
+  "payload/shell/watchers/audio_wait.sh": {
+    "sha256": "c908be80812c42c0d65f41c9f1bfef91adcb95543ab3d5f399f77fa2cd749db6",
+    "mode": "0o755"
+  },
+  "payload/shell/watchers/battery_fetch.sh": {
+    "sha256": "8122a50e444aa08999525d9252c869f7d6aee9a88f9dfe099e503449ce50d463",
+    "mode": "0o755"
+  },
+  "payload/shell/watchers/battery_wait.sh": {
+    "sha256": "98946b7c115993d63f8ff7008b3af0b9ece28fb4f789a953ea7eccfc682639d7",
+    "mode": "0o755"
+  },
+  "payload/shell/watchers/bt_fetch.sh": {
+    "sha256": "37cfa38f9069fcd099ea9db6bb5aab2fbd9436a3d4c284174d8b752e75fc8157",
+    "mode": "0o755"
+  },
+  "payload/shell/watchers/bt_wait.sh": {
+    "sha256": "794d051a2c2d2f91ab59eb765238659bb4e12567deeafa720442942e8af241ee",
+    "mode": "0o755"
+  },
+  "payload/shell/watchers/btbattery.py": {
+    "sha256": "860c30be42287b52773d19db0be061013e344e359f56fb8a4feccc197e2b173e",
+    "mode": "0o644"
+  },
+  "payload/shell/watchers/network_fetch.sh": {
+    "sha256": "4a7abfff7b1c5f4149082deaa5abbd0bc1f8cc20d0756182e3df4488290ac467",
+    "mode": "0o755"
+  },
+  "payload/shell/watchers/network_wait.sh": {
+    "sha256": "1eb9889209b2c41a13207ff2083f68dc6a4725d8513b076bd587355244cec8b0",
+    "mode": "0o755"
+  },
+  "payload/shell/watchers/sys_fetcher.sh": {
+    "sha256": "11a07cf99e33205c4a3496baa2ab993d9cd50f460f1f025fb129a2a3aecb20e7",
+    "mode": "0o755"
+  },
+  "payload/shell/wifi_list.sh": {
+    "sha256": "facc29b1add759db32cf76229323303c4ef961815291142890a8153696afc232",
+    "mode": "0o755"
+  },
+  "payload/shell/workspaces.sh": {
+    "sha256": "ba7356282c62f04f55e9ef6fcf3617a22ae750e8e94263b8fba23253d291c956",
+    "mode": "0o644"
+  },
+  "payload/wallpapers/blue-hour.png": {
+    "sha256": "2138d28e65bd4dfa4c1ee29676b7995e44737a5558675125605b0bc45ad4b0ba",
+    "mode": "0o644"
+  },
+  "payload/wallpapers/film-burn.png": {
+    "sha256": "a575890f4e4cd4440c44d728fad7ef0f4fb3318544330246e9994f7c28662ef0",
+    "mode": "0o644"
+  },
+  "payload/wallpapers/graphite-flow.png": {
+    "sha256": "573c2c81c16e33309ff25fd9cf6eac477ed2746151e67a6e9cd99c632421bfc0",
+    "mode": "0o644"
+  },
+  "payload/wallpapers/midnight-forest.png": {
+    "sha256": "4a8f2d7bcbd7feb066aee738eebd05e0450e212bdb9696c55301891e4578e51e",
+    "mode": "0o644"
+  },
+  "payload/wallpapers/warm-sand.png": {
+    "sha256": "78637ce83244cc82cb73053daadc5f2df6e4917034b4a722ac42c8f47fc86ed7",
+    "mode": "0o644"
+  },
+  "src/warp/warp.cpp": {
+    "sha256": "61b22e4181a7f4cd76e193756f3959d649cdf8b84320a4afab7a8774884a1ed6",
+    "mode": "0o644"
+  }
+}

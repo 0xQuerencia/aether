@@ -1,0 +1,248 @@
+#!/usr/bin/env python3
+"""Aether Send: native island sender using LocalSend protocol v2 (no app launch)."""
+import argparse,fcntl,hashlib,http.client,http.server,ipaddress,json,mimetypes,os,socket,ssl,subprocess,sys,tempfile,threading,time,uuid
+from pathlib import Path
+from urllib.parse import urlencode, urlsplit
+ROOT=Path(os.environ.get('XDG_STATE_HOME',Path.home()/'.local/state'))/'aether/share'
+GROUP='224.0.0.167';PORT=53317
+class ShareError(Exception):pass
+def error_message(error):
+ if isinstance(error,ConnectionRefusedError):return 'The receiver is unavailable. Open it on the other device, then refresh.'
+ if isinstance(error,(TimeoutError,socket.timeout)):return 'The device did not respond. Check the same Wi-Fi or hotspot connection and try again.'
+ if isinstance(error,(ConnectionResetError,BrokenPipeError,http.client.HTTPException)):return 'The connection ended before delivery. Keep the receiver open and try again.'
+ return str(error) or type(error).__name__
+def init():ROOT.mkdir(parents=True,exist_ok=True);ROOT.chmod(0o700)
+def atomic(path,data):
+ tmp=path.with_name(path.name+'.'+uuid.uuid4().hex+'.tmp')
+ fd=os.open(tmp,os.O_CREAT|os.O_EXCL|os.O_WRONLY,0o600)
+ with os.fdopen(fd,'w') as f:json.dump(data,f)
+ os.replace(tmp,path)
+def read(path,default=None):
+ try:return json.loads(path.read_text())
+ except (OSError,ValueError):return default
+def local_ips():
+ data=json.loads(subprocess.check_output(['ip','-j','-4','addr','show','up'],text=True))
+ return [a['local'] for i in data if i['ifname']!='lo' and not i['ifname'].startswith(('docker','br-','veth')) for a in i.get('addr_info',[]) if a.get('scope')=='global']
+def identity():
+ init()
+ with open(ROOT/'identity.lock','a') as lock:
+  os.chmod(lock.name,0o600);fcntl.flock(lock,fcntl.LOCK_EX)
+  cert=ROOT/'identity.pem';key=ROOT/'identity.key'
+  if not cert.exists() or not key.exists():
+   subprocess.run(['openssl','req','-x509','-newkey','rsa:2048','-nodes','-keyout',str(key),'-out',str(cert),'-days','3650','-subj','/CN=Aether Send'],check=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+   cert.chmod(0o600);key.chmod(0o600)
+ der=ssl.PEM_cert_to_DER_cert(cert.read_text());fingerprint=hashlib.sha256(der).hexdigest()
+ return {'alias':'Aether · '+socket.gethostname(),'version':'2.0','deviceModel':'Aether / Hyprland','deviceType':'desktop','fingerprint':fingerprint,'protocol':'https','port':53318,'download':False}
+def validate_peer(peer):
+ ip=ipaddress.ip_address(peer['ip'])
+ if ip.version!=4 or not (ip.is_private or ip.is_link_local) or ip.is_unspecified or ip.is_multicast:raise ShareError('Use a local network IPv4 address.')
+ port=int(peer.get('port',PORT))
+ if not 1<=port<=65535:raise ShareError('Invalid device port.')
+ if peer.get('protocol','https')!='https':raise ShareError('This device has encryption disabled. Enable HTTPS on the receiver.')
+ return str(ip),port
+def connection(peer,timeout=5):
+ ip,port=validate_peer(peer)
+ c=http.client.HTTPSConnection(ip,port,timeout=timeout,context=ssl._create_unverified_context());c.connect()
+ actual=hashlib.sha256(c.sock.getpeercert(binary_form=True)).hexdigest()
+ if peer.get('certificate') and peer['certificate']!=actual:c.close();raise ShareError('The device identity changed. Refresh nearby devices before sending.')
+ return c,actual
+def cancellation_watch(connection,identifier):
+ stop=threading.Event()
+ def watch():
+  while not stop.wait(.1):
+   if (ROOT/(identifier+'.cancel')).exists():
+    try:connection.sock.shutdown(socket.SHUT_RDWR)
+    except (OSError,AttributeError):pass
+    return
+ threading.Thread(target=watch,daemon=True).start()
+ return stop
+
+def request(peer,route,payload=None,timeout=5,identifier=None):
+ c,cert=connection(peer,timeout)
+ watch=cancellation_watch(c,identifier) if identifier else None
+ try:
+  body=json.dumps(payload).encode() if payload is not None else None
+  c.request('POST' if body is not None else 'GET','/api/localsend/v2/'+route,body,{'Content-Type':'application/json'} if body else {})
+  r=c.getresponse();raw=r.read(1024*1024)
+  errors={401:'This device requires a PIN. Enter its receive PIN and try again.',403:'The receiver declined the transfer.',409:'The receiver is busy with another transfer.',429:'Too many requests. Wait a moment and retry.'}
+  if r.status not in (200,204):raise ShareError(errors.get(r.status,'Receiver returned HTTP '+str(r.status)))
+  return (json.loads(raw) if raw else {}),cert,r.status
+ finally:
+  if watch:watch.set()
+  c.close()
+def probe(ip,port=PORT):
+ peer={'ip':ip,'port':port,'protocol':'https'};data,cert,_=request(peer,'info',timeout=2)
+ return {**peer,'alias':str(data.get('alias') or ip)[:120],'deviceType':str(data.get('deviceType') or 'desktop')[:30],'certificate':cert,'seen':time.time(),'id':hashlib.sha256((ip+':'+str(port)+cert).encode()).hexdigest()[:24]}
+def cache_peers(peers):
+ with open(ROOT/'peers.lock','a') as lock:
+  os.chmod(lock.name,0o600);fcntl.flock(lock,fcntl.LOCK_EX)
+  old=read(ROOT/'peers.json',{});old={k:v for k,v in old.items() if time.time()-v.get('seen',0)<180}
+  old.update({p['id']:p for p in peers});atomic(ROOT/'peers.json',old)
+def favorite():
+ value=read(ROOT/'favorite.json')
+ if value is not None:return value
+ 
+ candidates=[]
+ for path in ROOT.glob('*.json'):
+  job=read(path,{})
+  peer=job.get('peer',{})
+  try:
+   if job.get('status')=='succeeded' and peer.get('certificate') and not ipaddress.ip_address(peer['ip']).is_loopback:
+    candidates.append((job.get('updated',0),peer))
+  except (KeyError,ValueError):pass
+ value=max(candidates,key=lambda pair:pair[0])[1] if candidates else {}
+ if value:atomic(ROOT/'favorite.json',value)
+ return value
+
+def remember_favorite(peer):
+ if not ipaddress.ip_address(peer['ip']).is_loopback:atomic(ROOT/'favorite.json',peer)
+
+def decorated(peers):
+ known=favorite();found=False
+ for peer in peers:
+  peer.update(available=True,favorite=bool(known and peer.get('certificate')==known.get('certificate')))
+  if peer['favorite']:found=True;atomic(ROOT/'favorite.json',peer)
+ if known and not found:
+  peers.append({**known,'available':False,'favorite':True})
+ peers.sort(key=lambda peer:(not peer.get('favorite'),peer['alias'].casefold()))
+ return peers
+
+def scan():
+ info=identity();own=set(local_ips()+['127.0.0.1']);candidates={};guard=threading.Lock()
+ def remember(data,ip):
+  if ip in own:return
+  try:
+   peer={'ip':ip,'port':int(data.get('port',PORT)),'protocol':data.get('protocol','https')};validate_peer(peer)
+   with guard:
+    if len(candidates)<64:candidates[(ip,peer['port'])]=peer
+  except (ValueError,KeyError,ShareError):pass
+ class Handler(http.server.BaseHTTPRequestHandler):
+  def setup(self):self.request.settimeout(3);super().setup()
+  def log_message(self,*a):pass
+  def do_POST(self):
+   if self.path!='/api/localsend/v2/register':self.send_error(404);return
+   try:
+    n=int(self.headers.get('Content-Length','0'))
+    if not 0<n<=16384:raise ValueError()
+    data=json.loads(self.rfile.read(n));remember(data,self.client_address[0]);body=json.dumps(info).encode();self.send_response(200);self.send_header('Content-Length',str(len(body)));self.end_headers();self.wfile.write(body)
+   except (ValueError,OSError):self.send_error(400)
+ server=http.server.ThreadingHTTPServer(('0.0.0.0',0),Handler);server.daemon_threads=True
+ info['port']=server.server_port;context=ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER);context.load_cert_chain(ROOT/'identity.pem',ROOT/'identity.key');server.socket=context.wrap_socket(server.socket,server_side=True,do_handshake_on_connect=False)
+ threading.Thread(target=server.serve_forever,daemon=True).start()
+ udp=socket.socket(socket.AF_INET,socket.SOCK_DGRAM,socket.IPPROTO_UDP);udp.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1);udp.bind(('',PORT));udp.settimeout(.2)
+ for ip in own-{'127.0.0.1'}:
+  try:udp.setsockopt(socket.IPPROTO_IP,socket.IP_ADD_MEMBERSHIP,socket.inet_aton(GROUP)+socket.inet_aton(ip))
+  except OSError:pass
+ try:
+  end=time.monotonic()+4;last=0
+  while time.monotonic()<end:
+   if time.monotonic()-last>1:
+    for ip in own-{'127.0.0.1'}:
+     try:udp.setsockopt(socket.IPPROTO_IP,socket.IP_MULTICAST_IF,socket.inet_aton(ip));udp.sendto(json.dumps({**info,'announce':True}).encode(),(GROUP,PORT))
+     except OSError:pass
+    last=time.monotonic()
+   try:
+    raw,addr=udp.recvfrom(16384);remember(json.loads(raw),addr[0])
+   except (socket.timeout,ValueError,UnicodeError):pass
+ finally:udp.close();server.shutdown();server.server_close()
+ 
+ for route in json.loads(subprocess.check_output(['ip','-j','-4','route','show','default'],text=True)):
+  gateway=route.get('gateway')
+  if gateway and gateway not in own:remember({'port':PORT,'protocol':'https'},gateway)
+ known=favorite()
+ if known:remember(known,known['ip'])
+ peers=[]
+ 
+ def check(p):
+  try:peer=probe(p['ip'],p['port']);peers.append(peer)
+  except (OSError,ValueError,ShareError,http.client.HTTPException):pass
+ threads=[threading.Thread(target=check,args=(p,),daemon=True) for p in list(candidates.values())[:64]]
+ for t in threads:t.start()
+ for t in threads:t.join(3)
+ peers.sort(key=lambda p:p['alias'].casefold());cache_peers(peers);return peers
+
+def job_path(identifier):
+ if len(identifier)!=12 or any(c not in '0123456789abcdef' for c in identifier):raise ShareError('Invalid transfer ID.')
+ return ROOT/(identifier+'.json')
+def update(identifier,**values):
+ path=job_path(identifier);data=read(path,{})
+ data.update(values,updated=time.time());atomic(path,data);return data
+def cancelled(identifier):
+ if (ROOT/(identifier+'.cancel')).exists():raise ShareError('Transfer cancelled.')
+def transfer(identifier):
+ job=read(job_path(identifier));peer=job['peer'];source=Path(job['path']) if job.get('path') else None;session=None
+ try:
+  if source is not None and not source.exists():raise ShareError('The source file no longer exists.')
+  update(identifier,status='preparing',message='Preparing link…' if source is None else 'Preparing folder ZIP…' if source.is_dir() else 'Preparing file…',progress=0)
+  with tempfile.TemporaryDirectory(prefix='transfer-',dir=ROOT) as temp:
+   item=source
+   if job.get('url'):
+    item=Path(temp)/'Continue.txt';item.write_text(job['url']);item.chmod(0o600)
+   if source is not None and source.is_dir():
+    
+    item=Path(temp)/(source.name+'.zip')
+    archiver=subprocess.Popen([sys.executable,str(Path.home()/'.local/bin/aether-drop'),'zip',str(source),'--execute','--output',str(item)],stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL)
+    try:
+     while archiver.poll() is None:cancelled(identifier);time.sleep(.1)
+     if archiver.returncode:raise ShareError('Could not prepare the folder ZIP. Check source permissions.')
+    finally:
+     if archiver.poll() is None:archiver.terminate();archiver.wait()
+    item.chmod(0o600)
+   if not item.is_file():raise ShareError('Only regular files and folders can be sent.')
+   size=item.stat().st_size;fid=uuid.uuid4().hex;cancelled(identifier)
+   update(identifier,status='waiting',message='Waiting for '+peer['alias']+' to accept…',total=size)
+   route='prepare-upload'+(('?'+urlencode({'pin':job['pin']})) if job.get('pin') else '')
+   result,_,code=request(peer,route,{'info':identity(),'files':{fid:{'id':fid,'fileName':item.name,'size':size,'fileType':mimetypes.guess_type(item.name)[0] or 'application/octet-stream',**({'preview':job['url']} if job.get('url') else {})}}},timeout=60,identifier=identifier)
+   if code==204:update(identifier,status='succeeded',progress=1,message='Link received · tap it on your phone to continue.' if job.get('url') else 'Receiver already has this file.');remember_favorite(peer);return
+   session=result.get('sessionId');token=result.get('files',{}).get(fid)
+   if not token:raise ShareError('The receiver did not accept this file.')
+   cancelled(identifier);c,_=connection(peer,30);watch=cancellation_watch(c,identifier)
+   try:
+    c.putrequest('POST','/api/localsend/v2/upload?'+urlencode({'sessionId':session,'fileId':fid,'token':token}));c.putheader('Content-Type','application/octet-stream');c.putheader('Content-Length',str(size));c.endheaders()
+    sent=0;last=0;update(identifier,status='sending',message='Sending to '+peer['alias']+'…',sent=0)
+    with item.open('rb') as stream:
+     while chunk:=stream.read(256*1024):
+      cancelled(identifier);c.send(chunk);sent+=len(chunk)
+      if time.monotonic()-last>.15:update(identifier,sent=sent,progress=sent/size if size else 0);last=time.monotonic()
+    cancelled(identifier);update(identifier,status='confirming',message='Confirming delivery…',sent=sent)
+    r=c.getresponse();r.read(16384)
+    if r.status!=200:raise ShareError('Receiver could not save the file (HTTP '+str(r.status)+').')
+   finally:watch.set();c.close()
+   update(identifier,status='succeeded',progress=1,message='Link delivered · tap it on '+peer['alias']+' to continue.' if job.get('url') else 'Sent to '+peer['alias'],sent=size);remember_favorite(peer)
+ except BaseException as e:
+  if session:
+   try:request(peer,'cancel?'+urlencode({'sessionId':session}),{},timeout=2)
+   except Exception:pass
+  update(identifier,status='cancelled' if (ROOT/(identifier+'.cancel')).exists() else 'failed',message='Transfer cancelled.' if (ROOT/(identifier+'.cancel')).exists() else error_message(e))
+  print('Transfer cancelled.' if (ROOT/(identifier+'.cancel')).exists() else error_message(e),file=sys.stderr);raise SystemExit(1)
+ finally:
+  
+  data=read(job_path(identifier),{});data.pop('pin',None);atomic(job_path(identifier),data)
+def main():
+ init();p=argparse.ArgumentParser(description=__doc__);p.add_argument('action',choices=['scan','probe','start','worker','cancel','forget','start-link']);p.add_argument('value',nargs='?');p.add_argument('peer',nargs='?');p.add_argument('--pin',default='');a=p.parse_args()
+ if a.action=='scan':print(json.dumps({'devices':decorated(scan())}))
+ elif a.action=='probe':
+  peer=probe(a.value);cache_peers([peer]);print(json.dumps({'devices':decorated([peer])}))
+ elif a.action=='forget':atomic(ROOT/'favorite.json',{});print(json.dumps({'forgotten':True}))
+ elif a.action in ('start','start-link'):
+  url=None
+  if a.action=='start-link':
+   url=a.value.strip();parsed=urlsplit(url)
+   if len(url.encode())>8192 or parsed.scheme not in ('https','http') or not parsed.hostname or parsed.username is not None or parsed.password is not None or any(c.isspace() or ord(c)<32 or ord(c)==127 for c in url) or '\\' in url:raise ShareError('Choose a valid http or https page link.')
+   _=parsed.port
+  source=Path(a.value).expanduser().absolute()
+  if url is None and not source.exists():raise ShareError('The source no longer exists.')
+  peer=read(ROOT/'peers.json',{}).get(a.peer)
+  if not peer or time.time()-peer.get('seen',0)>180:raise ShareError('Device expired. Refresh nearby devices first.')
+  identifier=uuid.uuid4().hex[:12];update(identifier,path=str(source) if url is None else None,url=url,peer=peer,status='queued',message='Preparing transfer…',progress=0,pin=a.pin)
+  try:
+   task=subprocess.check_output([str(Path.home()/'.local/bin/aether-task'),'--title',('Continue · '+parsed.hostname if url else 'Send · '+source.name)+' → '+peer['alias'],'--',sys.executable,str(Path(__file__).resolve()),'worker',identifier],text=True).strip()
+  except Exception:
+   update(identifier,status='failed',pin='',message='Could not start transfer task.');raise
+  print(json.dumps({'id':identifier,'task':task}))
+ elif a.action=='worker':transfer(a.value)
+ elif a.action=='cancel':
+  job_path(a.value);fd=os.open(ROOT/(a.value+'.cancel'),os.O_CREAT|os.O_WRONLY,0o600);os.close(fd)
+if __name__=='__main__':
+ try:main()
+ except (OSError,ValueError,ShareError,http.client.HTTPException,subprocess.SubprocessError) as e:print(error_message(e),file=sys.stderr);sys.exit(1)

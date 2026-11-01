@@ -1,0 +1,341 @@
+#!/usr/bin/env python3
+"""Aether Continue: explicit page handoff, native island inbox, local HTTPS receiver."""
+import argparse
+import fcntl
+import hashlib
+import hmac
+import http.server
+import json
+import logging
+import os
+from pathlib import Path
+import secrets
+import socket
+import ssl
+import struct
+import subprocess
+import sys
+import threading
+import time
+from urllib.parse import parse_qs, urlsplit
+
+ROOT = Path(os.environ.get('XDG_STATE_HOME', Path.home()/'.local/state'))/'aether/continue'
+PORT = 53318
+LOG = logging.getLogger('aether-continue')
+
+
+def init():
+    ROOT.mkdir(parents=True, exist_ok=True, mode=0o700)
+    ROOT.chmod(0o700)
+
+
+def atomic(path, value):
+    temp = path.with_name('.'+path.name+'.'+secrets.token_hex(6))
+    fd = os.open(temp, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+    with os.fdopen(fd, 'w') as stream:
+        json.dump(value, stream, ensure_ascii=True)
+    os.replace(temp, path)
+
+
+def read_state():
+    try:
+        return json.loads((ROOT/'state.json').read_text())
+    except (OSError, ValueError):
+        return {'items': [], 'draft': {}, 'enabled': True}
+
+
+def edit(callback):
+    init()
+    with (ROOT/'state.lock').open('a') as lock:
+        os.chmod(lock.name, 0o600)
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        state = read_state()
+        state.setdefault('pin', str(secrets.randbelow(900000)+100000))
+        state['items'] = [i for i in state.get('items', []) if time.time()-i['created'] < 86400][:12]
+        result = callback(state)
+        state['updated'] = time.time()
+        atomic(ROOT/'state.json', state)
+        return result
+
+
+def clean(value, limit=160):
+    return ''.join(c for c in str(value) if c.isprintable())[:limit].strip()
+
+
+def validate_url(value):
+    if not isinstance(value, str):
+        raise ValueError('Choose a web page link.')
+    value = value.strip()
+    if not value or len(value.encode()) > 8192 or any(c.isspace() or ord(c) < 32 or ord(c) == 127 for c in value) or '\\' in value:
+        raise ValueError('Choose one valid web page link.')
+    parsed = urlsplit(value)
+    if parsed.scheme not in ('http', 'https') or not parsed.hostname or parsed.username is not None or parsed.password is not None:
+        raise ValueError('Only http and https page links are supported.')
+    _ = parsed.port
+    return value
+
+
+def extract_link(text):
+    if not isinstance(text, str) or len(text.encode()) > 8192:
+        raise ValueError('This receiver accepts page links only.')
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    urls = [line for line in lines if line.startswith(('https://', 'http://'))]
+    if len(urls) != 1 or len(lines) > 3:
+        raise ValueError('Share a single page link, not a file or several links.')
+    return validate_url(urls[0]), clean(next((line for line in lines if line != urls[0]), ''))
+
+
+def prepare(url, title='', show=True):
+    url = validate_url(url)
+    draft = {'url': url, 'title': clean(title) or urlsplit(url).hostname, 'created': time.time(), 'id': secrets.token_hex(6)}
+    edit(lambda state: state.update(draft=draft))
+    if show:
+        subprocess.run(['qs', '-p', str(Path.home()/'.config/hypr/scripts/quickshell/Shell.qml'), 'ipc', 'call', 'island', 'continuity'], check=True, stdout=subprocess.DEVNULL, timeout=5)
+    return {'prepared': True}
+
+
+def add_incoming(url, title, sender):
+    url = validate_url(url)
+    def add(state):
+        item = {'id': secrets.token_hex(8), 'url': url, 'title': clean(title) or urlsplit(url).hostname,
+                'sender': clean(sender) or 'Nearby device', 'created': time.time(), 'status': 'ready'}
+        state['items'] = [item] + [i for i in state.get('items', []) if i['url'] != url][:11]
+        return item['id']
+    return edit(add)
+
+
+def item_action(action, identifier):
+    state = read_state()
+    item = next((i for i in state.get('items', []) if i['id'] == identifier and time.time()-i['created'] < 86400), None)
+    if not item:
+        raise ValueError('This handoff has expired.')
+    if action in ('open', 'copy'):
+        url = validate_url(item['url'])
+        if action == 'open':
+            subprocess.run(['xdg-open', url], check=True, timeout=8, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        else:
+            subprocess.run(['wl-copy', '--', url], check=True, timeout=3)
+    def update(state):
+        if action == 'dismiss':
+            state['items'] = [i for i in state['items'] if i['id'] != identifier]
+        elif action == 'open':
+            for current in state['items']:
+                if current['id'] == identifier:
+                    current['status'] = 'opened'
+    edit(update)
+    return {'done': True}
+
+
+def identity(port=PORT):
+    init()
+    with (ROOT/'identity.lock').open('a') as lock:
+        os.chmod(lock.name, 0o600)
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        cert, key = ROOT/'identity.pem', ROOT/'identity.key'
+        if not cert.exists() or not key.exists():
+            subprocess.run(['openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', str(key), '-out', str(cert), '-days', '3650', '-subj', '/CN=Aether Continue'], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=15)
+            cert.chmod(0o600)
+            key.chmod(0o600)
+    fingerprint = hashlib.sha256(ssl.PEM_cert_to_DER_cert(cert.read_text())).hexdigest()
+    return {'alias': 'Aether Continue', 'version': '2.0', 'deviceModel': 'Aether / Hyprland',
+            'deviceType': 'desktop', 'fingerprint': fingerprint, 'port': port, 'protocol': 'https', 'download': False}
+
+
+class Receiver(http.server.ThreadingHTTPServer):
+    daemon_threads = True
+    allow_reuse_address = True
+    request_queue_size = 8
+
+    def __init__(self, address):
+        self.slots = threading.BoundedSemaphore(12)
+        self.guard = threading.Lock()
+        self.attempts = {}
+        super().__init__(address, Handler)
+        self.info = identity(self.server_port)
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        context.minimum_version = ssl.TLSVersion.TLSv1_2
+        context.load_cert_chain(ROOT/'identity.pem', ROOT/'identity.key')
+        self.socket = context.wrap_socket(self.socket, server_side=True, do_handshake_on_connect=False)
+
+    def process_request(self, request, client_address):
+        if not self.slots.acquire(blocking=False):
+            request.close()
+            return
+        try:
+            super().process_request(request, client_address)
+        except BaseException:
+            self.slots.release()
+            raise
+
+    def process_request_thread(self, request, client_address):
+        try:
+            request.settimeout(4)
+            super().process_request_thread(request, client_address)
+        finally:
+            self.slots.release()
+
+    def handle_error(self, request, client_address):
+        LOG.debug('Incomplete receiver request from %s', client_address[0])
+
+    def allowed_attempt(self, ip):
+        with self.guard:
+            now = time.monotonic()
+            self.attempts = {key: value for key, value in self.attempts.items() if now-value[0] < 60}
+            since, count = self.attempts.get(ip, (now, 0))
+            if count >= 5 or sum(v[1] for v in self.attempts.values()) >= 50:
+                return False
+            self.attempts[ip] = (since, count+1)
+            return True
+
+
+class Handler(http.server.BaseHTTPRequestHandler):
+    def log_message(self, *args):
+        pass  
+
+    def answer(self, status, value=None):
+        body = json.dumps(value).encode() if value is not None else b''
+        self.send_response(status)
+        self.send_header('Content-Type', 'application/json')
+        self.send_header('Content-Length', str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def payload(self):
+        if self.headers.get('Transfer-Encoding'):
+            raise ValueError('Unsupported encoding')
+        length = int(self.headers.get('Content-Length', '0'))
+        if not 0 < length <= 32768:
+            raise ValueError('Invalid body size')
+        data = json.loads(self.rfile.read(length))
+        if not isinstance(data, dict):
+            raise ValueError('Invalid request')
+        return data
+
+    def do_GET(self):
+        if urlsplit(self.path).path == '/api/localsend/v2/info':
+            self.answer(200, self.server.info)
+        else:
+            self.answer(404)
+
+    def do_POST(self):
+        try:
+            route = urlsplit(self.path)
+            if route.path == '/api/localsend/v2/register':
+                self.payload()
+                self.answer(200, self.server.info)
+                return
+            if route.path != '/api/localsend/v2/prepare-upload':
+                self.answer(404)
+                return
+            if not self.server.allowed_attempt(self.client_address[0]):
+                self.answer(429)
+                return
+            state = read_state()
+            if not state.get('enabled'):
+                self.answer(403)
+                return
+            pin = parse_qs(route.query).get('pin', [''])[0]
+            if not hmac.compare_digest(pin, state.get('pin', 'disabled')):
+                self.answer(401)
+                return
+            data = self.payload()
+            files = data.get('files')
+            if not isinstance(files, dict) or len(files) != 1 or not isinstance(data.get('info', {}), dict):
+                raise ValueError('Only one page link is accepted')
+            file = next(iter(files.values()))
+            if not isinstance(file, dict) or file.get('fileType') != 'text/plain':
+                raise ValueError('Only page links are accepted')
+            url, title = extract_link(file.get('preview'))
+            add_incoming(url, title, data.get('info', {}).get('alias', 'Nearby device'))
+            LOG.info('Received a page offer; waiting for a click in the island')
+            self.answer(204)  
+        except (ValueError, TypeError, KeyError, UnicodeError):
+            self.answer(400)
+
+
+def local_ips():
+    data = json.loads(subprocess.check_output(['ip', '-j', '-4', 'addr', 'show', 'up'], text=True, timeout=3))
+    return [a['local'] for i in data if i['ifname'] != 'lo' and not i['ifname'].startswith(('docker', 'br-', 'veth')) for a in i.get('addr_info', []) if a.get('scope') == 'global']
+
+
+def announce(server, stop):
+    while not stop.is_set():
+        try:
+            addresses = local_ips()
+            edit(lambda state: state.update(addresses=addresses, port=server.server_port, heartbeat=time.time()))
+            if read_state().get('enabled'):
+                with socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP) as udp:
+                    udp.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 1)
+                    for ip in addresses:
+                        udp.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_IF, socket.inet_aton(ip))
+                        udp.sendto(json.dumps({**server.info, 'announce': True}).encode(), ('224.0.0.167', 53317))
+        except (OSError, ValueError, subprocess.SubprocessError):
+            LOG.debug('Network announcement unavailable; retrying')
+        stop.wait(15)
+
+
+def native_message():
+    header = sys.stdin.buffer.read(4)
+    if len(header) != 4:
+        return
+    size, = struct.unpack('<I', header)
+    if size > 32768:
+        return
+    try:
+        data = json.loads(sys.stdin.buffer.read(size))
+        result = prepare(data['url'], data.get('title', ''))
+    except Exception:
+        result = {'error': 'Could not prepare this page. Open Aether Continue and paste its link.'}
+    raw = json.dumps(result).encode()
+    sys.stdout.buffer.write(struct.pack('<I', len(raw))+raw)
+    sys.stdout.buffer.flush()
+
+
+def main():
+    os.umask(0o077)
+    init()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('action', nargs='?', default='panel', choices=['daemon', 'panel', 'prepare', 'clipboard', 'status', 'open', 'copy', 'dismiss', 'receive', 'rotate-pin', 'native'])
+    parser.add_argument('value', nargs='?', default='')
+    parser.add_argument('--title', default='')
+    parser.add_argument('--no-show', action='store_true')
+    args = parser.parse_args()
+    if args.action == 'native':
+        native_message()
+        return
+    edit(lambda state: None)
+    if args.action == 'daemon':
+        logging.basicConfig(level=logging.DEBUG, format='%(levelname)s %(name)s: %(message)s')
+        server = Receiver(('0.0.0.0', PORT))
+        stop = threading.Event()
+        threading.Thread(target=announce, args=(server, stop), daemon=True).start()
+        LOG.info('Continue receiver ready on port %s; explicit link offers only', server.server_port)
+        try:
+            server.serve_forever()
+        finally:
+            stop.set()
+            server.server_close()
+    elif args.action in ('prepare', 'clipboard'):
+        value = subprocess.check_output(['wl-paste', '--no-newline'], text=True, timeout=3) if args.action == 'clipboard' else args.value
+        print(json.dumps(prepare(value, args.title, not args.no_show)))
+    elif args.action == 'status':
+        state = read_state()
+        print(json.dumps({'ready': time.time()-state.get('heartbeat', 0) < 35, 'enabled': state.get('enabled'), 'offers': len(state['items'])}))
+    elif args.action == 'receive':
+        if args.value not in ('on', 'off'):
+            raise ValueError('Use receive on or receive off.')
+        edit(lambda state: state.update(enabled=args.value == 'on'))
+    elif args.action == 'rotate-pin':
+        edit(lambda state: state.update(pin=str(secrets.randbelow(900000)+100000)))
+    elif args.action in ('open', 'copy', 'dismiss'):
+        print(json.dumps(item_action(args.action, args.value)))
+    else:
+        subprocess.run(['qs', '-p', str(Path.home()/'.config/hypr/scripts/quickshell/Shell.qml'), 'ipc', 'call', 'island', 'continuity'], check=True, timeout=5)
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except (OSError, ValueError, subprocess.SubprocessError) as error:
+        print(str(error), file=sys.stderr)
+        sys.exit(1)

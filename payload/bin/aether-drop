@@ -1,0 +1,107 @@
+#!/usr/bin/env python3
+"""Aether local file actions. Example: aether-drop zip /path/to/folder"""
+import argparse,json,os,shutil,stat,subprocess,sys,time,uuid,zipfile
+from pathlib import Path
+from urllib.parse import unquote,urlparse
+
+IMAGES={'.png','.jpg','.jpeg','.webp','.avif','.bmp','.gif','.tif','.tiff'}
+VIDEOS={'.mp4','.mkv','.mov','.webm','.avi','.m4v'}
+def path_from(value):
+    if value.startswith('file:'):
+        parsed=urlparse(value)
+        if parsed.netloc not in ['', 'localhost']:raise ValueError('Only local files are supported')
+        value=unquote(parsed.path)
+    path=Path(value).expanduser().absolute()
+    if not path.exists():raise ValueError('File or folder does not exist')
+    return path
+def describe(path):
+    kind='folder' if path.is_dir() else 'image' if path.suffix.lower() in IMAGES else 'video' if path.suffix.lower() in VIDEOS else 'file'
+    actions={'folder':['zip','terminal'],'image':['resize','compress','text','wallpaper'],'video':['trim','mute','audio','gif'],'file':['zip']}[kind]
+    return {'path':str(path),'name':path.name,'kind':kind,'actions':actions+['send'],'thumbnail':str(path)+'.preview.jpg' if kind=='video' and Path(str(path)+'.preview.jpg').is_file() else ''}
+def output_path(source,action):
+    extensions={'zip':'.zip','resize':source.suffix.lower(),'compress':'.webp','text':'.txt','trim':'.mp4','mute':'.mp4','audio':'.m4a','gif':'.gif'}
+    folder=Path.home()/'Downloads/Aether';folder.mkdir(parents=True,exist_ok=True)
+    return folder/(source.stem+'-'+action+'-'+uuid.uuid4().hex[:8]+extensions[action])
+def run(args):subprocess.run([str(a) for a in args],check=True,stdin=subprocess.DEVNULL)
+def walk_error(error):raise error
+def archive(source,target):
+    excluded={target.absolute()}
+    with zipfile.ZipFile(target,'w',compression=zipfile.ZIP_DEFLATED,compresslevel=6) as z:
+        paths=[source]
+        if source.is_dir():
+            for directory,dirs,files in os.walk(source,followlinks=False,onerror=walk_error):
+                directory=Path(directory)
+                for name in dirs+files:paths.append(directory/name)
+        for item in paths:
+            if item.absolute() in excluded:continue
+            name=str(Path(source.name or 'root')/item.relative_to(source)) if item!=source else source.name or 'root'
+            info=item.lstat()
+            if stat.S_ISLNK(info.st_mode):
+                entry=zipfile.ZipInfo(name);entry.create_system=3;entry.external_attr=(stat.S_IFLNK|0o777)<<16;z.writestr(entry,os.readlink(item))
+            elif stat.S_ISDIR(info.st_mode):z.write(item,name+'/')
+            elif stat.S_ISREG(info.st_mode):z.write(item,name)
+def execute(action,source,target,width,start,duration):
+    if target.exists():raise ValueError('Output already exists; refusing to overwrite')
+    target.parent.mkdir(parents=True,exist_ok=True)
+    
+    fd=os.open(target,os.O_CREAT|os.O_EXCL|os.O_WRONLY,0o600);os.close(fd)
+    try:
+        if action=='zip':archive(source,target)
+        elif action=='resize':run(['magick',source,'-resize',f'{width}x{width}>',target])
+        elif action=='compress':run(['magick',source,'-strip','-quality','85',target])
+        elif action=='text':
+            with open(target,'wb') as stream:subprocess.run(['tesseract',str(source),'stdout'],stdout=stream,check=True,stdin=subprocess.DEVNULL)
+        else:
+            command=['ffmpeg','-hide_banner','-loglevel','error','-y']
+            if action in ['trim','gif']:command+=['-ss',str(start)]
+            command+=['-i',str(source)]
+            if action in ['trim','gif']:command+=['-t',str(duration)]
+            if action=='mute':command+=['-an','-c:v','libx264','-preset','fast','-crf','20']
+            elif action=='audio':command+=['-vn','-c:a','aac','-b:a','192k']
+            elif action=='gif':command+=['-vf',f'fps=12,scale={min(width,960)}:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse']
+            else:command+=['-c:v','libx264','-preset','fast','-crf','20','-c:a','aac']
+            run(command+[str(target)])
+        target.chmod(0o600)
+        if source.suffix.lower() in VIDEOS and action != 'gif':
+            preview=Path(str(target)+'.preview.jpg')
+            if not preview.exists():
+                result=subprocess.run(['ffmpeg','-hide_banner','-loglevel','error','-n','-i',str(source),'-frames:v','1','-vf','scale=480:-1',str(preview)],stdin=subprocess.DEVNULL)
+                if result.returncode==0 and preview.exists():preview.chmod(0o600)
+        print('Output: '+str(target),flush=True)
+    except BaseException:
+        target.unlink(missing_ok=True);raise
+def main():
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('action',choices=['zone','panel','inspect','zip','resize','compress','text','wallpaper','trim','mute','audio','gif','terminal','send'])
+    parser.add_argument('path',nargs='?');parser.add_argument('--width',type=int,default=1920);parser.add_argument('--start',type=float,default=0);parser.add_argument('--duration',type=float,default=10)
+    parser.add_argument('--wait',action='store_true');parser.add_argument('--execute',action='store_true',help=argparse.SUPPRESS);parser.add_argument('--output',type=Path,help=argparse.SUPPRESS)
+    options=parser.parse_args()
+    if options.action=='zone':
+        run(['qs','-p',Path.home()/'.config/hypr/scripts/quickshell/Shell.qml','ipc','call','island','dropzone']);return
+    if not options.path:parser.error('a file or folder path is required')
+    source=path_from(options.path);data=describe(source)
+    if options.action=='inspect':print(json.dumps(data));return
+    if options.action=='send':
+        run(['qs','-p',Path.home()/'.config/hypr/scripts/quickshell/Shell.qml','ipc','call','island','drop',source]);return
+    if options.action=='panel':
+        run(['qs','-p',Path.home()/'.config/hypr/scripts/quickshell/Shell.qml','ipc','call','island','drop',source]);return
+    if options.action not in data['actions']:raise ValueError('This action is not available for this item')
+    if not 16<=options.width<=16384 or options.start<0 or not 0<options.duration<=86400:raise ValueError('Invalid width, start time or duration')
+    if options.action=='terminal':
+        subprocess.Popen(['foot','--working-directory',str(source)],start_new_session=True,stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+        print(json.dumps({'done':True,'action':'terminal'}));return
+    if options.action=='wallpaper':
+        subprocess.run([str(Path.home()/'.config/hypr/scripts/change-wallpaper.sh'),str(source)],check=True,stdout=subprocess.DEVNULL)
+        print(json.dumps({'done':True,'action':'wallpaper'}));return
+    if options.execute:
+        execute(options.action,source,options.output,options.width,options.start,options.duration);return
+    output=output_path(source,options.action)
+    thumbnail=str(output) if options.action in ['resize','compress','gif'] else str(output)+'.preview.jpg' if data['kind']=='video' else ''
+    command=[str(Path.home()/'.local/bin/aether-task'),'--thumbnail',thumbnail,'--title',options.action.title()+' · '+source.name,'--output',str(output)]
+    if options.wait:command+=['--wait']
+    command+=['--',sys.executable,str(Path(__file__).resolve()),options.action,str(source),'--execute','--output',str(output),'--width',str(options.width),'--start',str(options.start),'--duration',str(options.duration)]
+    result=subprocess.run(command,check=True,text=True,capture_output=True)
+    print(json.dumps({'id':result.stdout.strip(),'output':str(output),'kind':data['kind'],'thumbnail':thumbnail}))
+if __name__=='__main__':
+    try:main()
+    except (OSError,ValueError,subprocess.SubprocessError,zipfile.BadZipFile) as error:print('aether-drop: '+str(error),file=sys.stderr);sys.exit(1)

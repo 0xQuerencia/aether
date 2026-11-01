@@ -1,0 +1,85 @@
+#!/usr/bin/env python3
+"""Local screen reference pins; private captures, atomic state, no shell evaluation."""
+import argparse, fcntl, json, os, re, subprocess, sys, time, uuid
+from pathlib import Path
+
+ROOT = Path(os.environ.get('XDG_STATE_HOME', Path.home()/'.local/state'))/'aether/pins'
+INDEX = ROOT/'index.json'
+
+def ipc(method):
+    return subprocess.run(['qs','-p',str(Path.home()/'.config/hypr/scripts/quickshell/Shell.qml'), 'ipc','call','island',method], capture_output=True)
+
+def change(callback):
+    ROOT.mkdir(parents=True, exist_ok=True); ROOT.chmod(0o700)
+    with (ROOT/'state.lock').open('a+') as lock:
+        os.chmod(lock.name,0o600); fcntl.flock(lock,fcntl.LOCK_EX)
+        items=json.loads(INDEX.read_text()) if INDEX.exists() else []
+        result=callback(items)
+        temp=ROOT/('index-'+uuid.uuid4().hex+'.tmp')
+        temp.write_text(json.dumps(items));temp.chmod(0o600);temp.replace(INDEX)
+        return result
+
+def main():
+    parser=argparse.ArgumentParser(description=__doc__)
+    sub=parser.add_subparsers(dest='command',required=True)
+    sub.add_parser('init');sub.add_parser('list');sub.add_parser('panel')
+    cap=sub.add_parser('capture');cap.add_argument('--geometry',help='Optional explicit grim region, e.g. 100,100 500x300')
+    update=sub.add_parser('update');update.add_argument('id');update.add_argument('changes',help='JSON: hidden, passthrough, opacity, width, x, y')
+    remove=sub.add_parser('remove');remove.add_argument('id')
+    args=parser.parse_args()
+    if args.command=='panel':
+        if ipc('pins').returncode: raise RuntimeError('Aether shell is not running')
+        return
+    if args.command in ('init','list'):
+        print(json.dumps(change(lambda items: list(items))));return
+    if args.command=='capture':
+        ROOT.mkdir(parents=True,exist_ok=True);ROOT.chmod(0o700)
+        with (ROOT/'capture.lock').open('a+') as lock:
+            os.chmod(lock.name,0o600)
+            try: fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+            except BlockingIOError: raise RuntimeError('A region selection is already open')
+            geometry=args.geometry
+            if not geometry:
+                ipc('close')
+                pick=subprocess.run(['slurp','-d','-c','#87b6a9','-b','#00000066'],capture_output=True,text=True)
+                if pick.returncode: return
+                geometry=pick.stdout.strip()
+                time.sleep(.3)
+            if not re.fullmatch(r'-?\d+,-?\d+ [1-9]\d*x[1-9]\d*',geometry): raise ValueError('Invalid capture region')
+            ident=uuid.uuid4().hex;image=ROOT/(ident+'.png')
+            try:
+                subprocess.run(['grim','-g',geometry,str(image)],check=True,capture_output=True);image.chmod(0o600)
+                position,size=geometry.split();x,y=map(int,position.split(','));w,h=map(int,size.split('x'))
+                monitors=json.loads(subprocess.check_output(['hyprctl','-j','monitors'],text=True))
+                monitor=next((m for m in monitors if m['x']<=x<m['x']+m['width']/m['scale'] and m['y']<=y<m['y']+m['height']/m['scale']),next(m for m in monitors if m['focused']))
+                item=dict(id=ident,path=str(image),screen=monitor['name'],x=max(0,x-monitor['x']),y=max(40,y-monitor['y']),width=min(640,max(360,w)),ratio=w/h,opacity=1.0,passthrough=False,hidden=False)
+                change(lambda items: items.append(item));print(json.dumps(item))
+            except Exception:
+                image.unlink(missing_ok=True);raise
+        return
+    if args.command=='update':
+        values=json.loads(args.changes);allowed={'hidden','passthrough','opacity','width','x','y'}
+        if not isinstance(values,dict) or set(values)-allowed:raise ValueError('Unsupported pin setting')
+        for key,value in values.items():
+            if key in ('hidden','passthrough'):
+                if type(value) is not bool:raise ValueError('Expected boolean')
+            elif type(value) not in (float,int) or not (-100000<value<100000):raise ValueError('Invalid numeric setting')
+        if 'opacity' in values:values['opacity']=max(.2,min(1,values['opacity']))
+        if 'width' in values:values['width']=max(280,min(2400,values['width']))
+        def update(items):
+            item=next((i for i in items if i['id']==args.id),None)
+            if item is None:raise ValueError('Pin no longer exists')
+            item.update(values)
+        change(update)
+    elif args.command=='remove':
+        def remove(items):
+            item=next((i for i in items if i['id']==args.id),None)
+            if item is None:raise ValueError('Pin no longer exists')
+            items.remove(item)
+        
+        change(remove)
+
+if __name__=='__main__':
+    try:main()
+    except (OSError,ValueError,RuntimeError,subprocess.SubprocessError) as error:
+        print('Aether pin: '+str(error),file=sys.stderr);sys.exit(1)

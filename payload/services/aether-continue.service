@@ -1,0 +1,14 @@
+[Unit]
+Description=Aether Continue local page handoff receiver
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+ExecStart=%h/.local/bin/aether-continue daemon
+Restart=on-failure
+RestartSec=3
+UMask=0077
+NoNewPrivileges=true
+
+[Install]
+WantedBy=graphical-session.target

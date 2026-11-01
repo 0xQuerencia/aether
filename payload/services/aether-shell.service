@@ -1,0 +1,12 @@
+[Unit]
+Description=Aether Quickshell island
+After=graphical-session.target
+PartOf=graphical-session.target
+[Service]
+ExecStart=/usr/bin/qs -p %h/.config/hypr/scripts/quickshell/Shell.qml
+Restart=on-failure
+RestartSec=3
+Environment=PATH=%h/.local/bin:%h/.cargo/bin:/usr/local/bin:/usr/bin:/bin
+Environment=QSG_RENDER_LOOP=threaded
+[Install]
+WantedBy=graphical-session.target
