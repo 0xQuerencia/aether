@@ -24,8 +24,8 @@ jobs:
         run: |
           mkdir -p public
           cp site/index.html public/index.html
-          gh release download v0.1.0 --repo "${GITHUB_REPOSITORY}" --pattern 'Aether-showcase-with-text.mp4' --dir public
-          du -h public/Aether-showcase-with-text.mp4
+          gh release download v0.1.1 --repo "${GITHUB_REPOSITORY}" --pattern 'Aether-showcase-sample-data.mp4' --dir public
+          du -h public/Aether-showcase-sample-data.mp4
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
