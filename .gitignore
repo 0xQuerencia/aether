@@ -1,0 +1,12 @@
+/build/
+/dist/
+__pycache__/
+*.pyc
+*.log
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.so
+AGENTS.md
