@@ -233,6 +233,7 @@ Variants {
             DashboardWindow { island: islandWindow; screen: islandWindow.screen }
             VpnWindow { island: islandWindow; screen: islandWindow.screen }
             MonitorPrefs { id: monitorPrefs; monitorName: islandWindow.screen.name }
+            readonly property var monitorOptions: monitorPrefs
             property bool taskMgrOpen: false
             TaskManager { island: islandWindow; screen: islandWindow.screen }
             property var mocha: _colors            // exposed so panels can access island.mocha.red etc.
