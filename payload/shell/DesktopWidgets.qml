@@ -16,6 +16,7 @@ Variants {
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
             mask: Region { width: 0; height: 0 }
             MonitorPrefs { id: options; monitorName: desktop.screen.name }
+            MatugenColors { id: palette }
             Item {
                 anchors.fill: parent
                 Text {
@@ -43,7 +44,7 @@ Variants {
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.bottom: parent.bottom
                     anchors.bottomMargin: 30
-                    accent: "#64b69c"
+                    accent: palette.blue
                     active: options.wallpaperVisualizer && desktop.visible
                     visible: options.wallpaperVisualizer
                 }
