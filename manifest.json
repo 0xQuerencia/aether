@@ -199,6 +199,10 @@
     "sha256": "081e180d25f3c34255b0982d7f98217667aa2b6c2d291f4c04e57de52cf82284",
     "mode": "0o644"
   },
+  "payload/shell/DashboardWindow.qml": {
+    "sha256": "e6610a049854e52617cd607a956ba76199e5602099e9d4ebf781880db2627528",
+    "mode": "0o644"
+  },
   "payload/shell/DesktopWidgets.qml": {
     "sha256": "5d8dfd9fffa649959cb7496e57828807463d0d745b0b0b1b24439a1e73c110ae",
     "mode": "0o644"
@@ -220,7 +224,7 @@
     "mode": "0o644"
   },
   "payload/shell/Island.qml": {
-    "sha256": "7bcdd19c91633d02c487cec8e3847d952c67ec0bec461afe97c1d798340e3a55",
+    "sha256": "3b8a235a6d24389a0973c8a2c0ee850b0a4d45322711c40eadb6f88bb2d6446b",
     "mode": "0o644"
   },
   "payload/shell/IslandAppTail.qml": {
@@ -259,12 +263,16 @@
     "sha256": "d6b284caf1e9bc62cf6e9348a7649826a9808714f0e93bbdc80251b9c53c0734",
     "mode": "0o644"
   },
+  "payload/shell/MonitorPrefs.qml": {
+    "sha256": "cc164bfdc3449d8df6a8613c572d9c0c07f16accf94d4cd98ae7bcd39d34d668",
+    "mode": "0o644"
+  },
   "payload/shell/Notifs.qml": {
     "sha256": "8fb64a96abd0269200497541d9f157c000ae9bec21b40792c5c38da5528de1c5",
     "mode": "0o644"
   },
   "payload/shell/OriginalIsland.qml": {
-    "sha256": "9aed79fadc9b152f0481a2b6d428076873a2f3082cc0c6450f4e90d2a983db6c",
+    "sha256": "ae7edb0d4ef812e914bbe4915c478bcfc0ce7dfa3835ff3cd9bfdfb2d0b27122",
     "mode": "0o644"
   },
   "payload/shell/PalettePicker.qml": {
@@ -312,7 +320,7 @@
     "mode": "0o644"
   },
   "payload/shell/Shell.qml": {
-    "sha256": "ff9e4721bec0261e7e415db5e6f175ca39b5002770a43af1ae216648f6e2a868",
+    "sha256": "e82c16c982facd09a805e3ac3f27b71ed27f4e06f4170eb1a1c8a98d3f69320c",
     "mode": "0o644"
   },
   "payload/shell/SpectrumBars.qml": {
@@ -329,6 +337,10 @@
   },
   "payload/shell/Tasks.qml": {
     "sha256": "52633552b700d27720e3187bfe3294f406200fa6d12c9b61b8b0731f06add4ec",
+    "mode": "0o644"
+  },
+  "payload/shell/VpnWindow.qml": {
+    "sha256": "fccb98326e8dca4772f975afd486f6a8b472bc3aa9f6895e3f0dde1e85ab54cd",
     "mode": "0o644"
   },
   "payload/shell/WindowRegistry.js": {
@@ -484,7 +496,7 @@
     "mode": "0o644"
   },
   "payload/shell/panels/MediaPanel.qml": {
-    "sha256": "8b1fdec371744cb41e3b7158baddd82e9b125d6682d9dd4050683acd82699895",
+    "sha256": "4b55ff92e06988d82a3cf0166312b262167c23b7b42056ebe482e446be1dda9b",
     "mode": "0o644"
   },
   "payload/shell/panels/NotifHistPanel.qml": {
