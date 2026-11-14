@@ -3,6 +3,8 @@ import importlib.machinery
 import importlib.util
 from pathlib import Path
 import sys
+# Avoid creating Python bytecode inside the installable payload during CI.
+sys.dont_write_bytecode = True
 import tempfile
 import unittest
 
