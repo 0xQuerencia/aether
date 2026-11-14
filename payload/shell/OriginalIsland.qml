@@ -78,9 +78,18 @@ Variants {
                 function tasks() { islandWindow.openTasks(); }
                 function launcher()   { islandWindow.openLauncher() }
                 function control()    { islandWindow.controlOpen = !islandWindow.controlOpen }
-                function lyrics()     { islandWindow.lyricsOpen = !islandWindow.lyricsOpen; }
-                function dashboard()  { islandWindow.dashboardOpen = !islandWindow.dashboardOpen; }
-                function vpn()        { islandWindow.vpnOpen = !islandWindow.vpnOpen; }
+                function focusExtra(prop) {
+                    const next = !islandWindow[prop];
+                    islandWindow.lyricsOpen = false; islandWindow.dashboardOpen = false; islandWindow.vpnOpen = false;
+                    islandWindow.controlOpen = false; islandWindow.settingsOpen = false;
+                    islandWindow.taskMgrOpen = false; islandWindow.niriOpen = false;
+                    islandWindow.powerMenuOpen = false; islandWindow.mode = "collapsed";
+                    islandWindow.updateMode();
+                    islandWindow[prop] = next;
+                }
+                function lyrics()     { focusExtra("lyricsOpen"); }
+                function dashboard()  { focusExtra("dashboardOpen"); }
+                function vpn()        { focusExtra("vpnOpen"); }
                 function power()      { islandWindow.openPower() }
                 function clipboard()  { islandWindow.openClipboard() }
                 function emoji()      { if (islandWindow.mode === "emoji") { islandWindow.mode = "collapsed"; islandWindow.updateMode(); } else { islandWindow.openEmoji(); } }
