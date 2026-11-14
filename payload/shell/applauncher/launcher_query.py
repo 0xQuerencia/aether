@@ -39,8 +39,31 @@ def row(name,payload,icon='',kind='app',detail=''):
  return dict(name=name,exec=payload,icon=icon,kind=kind,detail=detail)
 def is_calculation(q):
  return bool(re.fullmatch(r'[0-9.eE+*/%()^\-\s]+',q) and re.search(r'[+*/%^]|(?<!^)-',q))
+ISLAND_ACTIONS = {
+    "dashboard": ("Dashboard", "Fullscreen overview and system status"),
+    "lyrics": ("Synchronized lyrics", "Follow timed lyrics with live audio"),
+    "vpn": ("VPN", "Connect or disconnect saved VPN profiles"),
+    "taskmgr": ("Task manager", "Processes and detailed performance"),
+    "sound": ("Audio mixer", "Per-application volume and routing"),
+    "wallpaper": ("Wallpapers", "Select a wallpaper"),
+    "palette": ("Palette", "Choose theme colors"),
+    "settings": ("Settings", "Desktop preferences"),
+}
+THEMES = ("midnight-forest", "warm-sand", "blue-hour")
+SCHEMES = ("scheme-tonal-spot", "scheme-neutral", "scheme-content")
+
+def aether_actions(search):
+    entries = [row(name, ident, "system-run", "island", desc) for ident, (name, desc) in ISLAND_ACTIONS.items()]
+    entries += [row("Theme: " + value.replace("-", " ").title(), value, "preferences-desktop-theme", "theme", "Apply Aether theme") for value in THEMES]
+    entries += [row("Colors: " + value.replace("scheme-", "").replace("-", " ").title(), value, "applications-graphics", "scheme", "Recolor current wallpaper") for value in SCHEMES]
+    if search:
+        entries = [item for item in entries if score(search, item["name"]) >= 0 or search.casefold() in item["detail"].casefold()]
+    return entries[:16]
+
 def query(text):
  q=text.strip()
+ if q.startswith('@'):
+  return aether_actions(q[1:].strip())
  if q.startswith('>'):
   cmd=q[1:].strip()
   return [row(cmd,cmd,'utilities-terminal','command','Run command')] if cmd else []
@@ -66,6 +89,18 @@ def query(text):
  ranked.sort(key=lambda item:(-item[0],item[1]['name'].casefold()))
  return [row(a['name'],a['exec'],a['icon'],detail='Recent' if not q and a['exec'] in history else '') for _,a in ranked[:12]]
 def action(kind,payload,origin=None):
+ if kind=='island':
+  if payload not in ISLAND_ACTIONS: raise ValueError('Unknown Aether action')
+  subprocess.run(['qs','-p',str(HOME/'.config/hypr/scripts/quickshell/Shell.qml'),'ipc','call','island',payload],check=True,timeout=5)
+  return
+ if kind=='theme':
+  if payload not in THEMES: raise ValueError('Unknown theme')
+  subprocess.run(['python3',str(HOME/'.config/hypr/scripts/aether-theme.py'),'apply',payload],check=True,timeout=90)
+  return
+ if kind=='scheme':
+  if payload not in SCHEMES: raise ValueError('Unknown colour scheme')
+  subprocess.run(['python3',str(HOME/'.config/hypr/scripts/aether-theme.py'),'recolor',payload],check=True,timeout=90)
+  return
  if kind in ('app','command'):
   clean=re.sub(r'%[fFuUdDnNickvm]','',payload).strip()
   warp=HOME/'.local/bin/aether-warp'
