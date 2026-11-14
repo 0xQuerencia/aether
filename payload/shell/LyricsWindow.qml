@@ -64,9 +64,9 @@ PanelWindow {
         height: Math.min(parent.height - 64, 760)
         anchors.centerIn: parent
         radius: 26
-        color: "#101416"
+        color: lyrics.island.mocha.base
         border.width: 1
-        border.color: "#34413d"
+        border.color: lyrics.island.mocha.surface1
         Keys.onEscapePressed: lyrics.close()
         ColumnLayout {
             anchors.fill: parent
@@ -76,14 +76,14 @@ PanelWindow {
                 Layout.fillWidth: true
                 ColumnLayout {
                     Layout.fillWidth: true; spacing: 4
-                    Text { text: "NOW PLAYING"; color: "#65cbb0"; font.family: "Inter"; font.pixelSize: 11; font.letterSpacing: 2 }
-                    Text { Layout.fillWidth: true; text: lyrics.media.title || "No music playing"; color: "#f2f5f3"; font.family: "Inter"; font.weight: Font.DemiBold; font.pixelSize: 26; elide: Text.ElideRight }
-                    Text { text: lyrics.media.artist || ""; color: "#aab5b0"; font.family: "Inter"; font.pixelSize: 15 }
+                    Text { text: "NOW PLAYING"; color: lyrics.island.accent; font.family: "Inter"; font.pixelSize: 11; font.letterSpacing: 2 }
+                    Text { Layout.fillWidth: true; text: lyrics.media.title || "No music playing"; color: lyrics.island.mocha.text; font.family: "Inter"; font.weight: Font.DemiBold; font.pixelSize: 26; elide: Text.ElideRight }
+                    Text { text: lyrics.media.artist || ""; color: lyrics.island.mocha.subtext0; font.family: "Inter"; font.pixelSize: 15 }
                 }
-                Button { text: "Close  ×"; Accessible.name: "Close synchronized lyrics"; onClicked: lyrics.close() }
+                AetherButton { colors: lyrics.island.mocha; uiScale: 1; text: "Close  ×"; Accessible.name: "Close synchronized lyrics"; onClicked: lyrics.close() }
             }
-            SpectrumBars { Layout.fillWidth: true; Layout.preferredHeight: 45; active: lyrics.open && lyrics.media.status === "Playing"; accent: "#65cbb0" }
-            Rectangle { Layout.fillWidth: true; height: 1; color: "#34413d" }
+            SpectrumBars { Layout.fillWidth: true; Layout.preferredHeight: 45; active: lyrics.open && lyrics.media.status === "Playing"; accent: lyrics.island.accent }
+            Rectangle { Layout.fillWidth: true; height: 1; color: lyrics.island.mocha.surface1 }
             ListView {
                 id: lyricList
                 Layout.fillWidth: true; Layout.fillHeight: true
@@ -98,7 +98,7 @@ PanelWindow {
                     text: modelData.text
                     wrapMode: Text.WordWrap
                     horizontalAlignment: Text.AlignHCenter
-                    color: index === lyrics.selected ? "#e4fff4" : "#84928d"
+                    color: index === lyrics.selected ? lyrics.island.mocha.text : lyrics.island.mocha.overlay0
                     font.family: "Inter"
                     font.pixelSize: index === lyrics.selected ? 22 : 17
                     font.weight: index === lyrics.selected ? Font.DemiBold : Font.Normal
@@ -110,11 +110,11 @@ PanelWindow {
                           lyrics.lyricsStatus === "rate-limited" ? "Lyrics service is busy. Try again later." :
                           lyrics.lyricsStatus === "offline" ? "Lyrics unavailable offline." :
                           "No synchronized lyrics found for this track."
-                    color: "#9da9a4"
+                    color: lyrics.island.mocha.subtext0
                     font.family: "Inter"; font.pixelSize: 15
                 }
             }
-            Text { Layout.alignment: Qt.AlignHCenter; text: lyrics.lyricsStatus === "local" ? "LOCAL LRC" : "LRCLIB · synced when available"; color: "#73817b"; font.family: "Inter"; font.pixelSize: 11 }
+            Text { Layout.alignment: Qt.AlignHCenter; text: lyrics.lyricsStatus === "local" ? "LOCAL LRC" : "LRCLIB · synced when available"; color: lyrics.island.mocha.subtext0; font.family: "Inter"; font.pixelSize: 11 }
         }
     }
     Item { id: keys; focus: open; Keys.onEscapePressed: lyrics.close() }
