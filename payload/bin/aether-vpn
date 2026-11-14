@@ -1,0 +1,76 @@
+#!/usr/bin/env python3
+"""Safe NetworkManager VPN selector used by Aether. No shell evaluation."""
+import argparse
+import json
+import re
+import subprocess
+import sys
+
+UUID = re.compile(r"^[0-9a-fA-F-]{36}$")
+TYPES = {"vpn", "wireguard"}
+
+
+def run(*args, timeout=15):
+    return subprocess.run(["nmcli", "--wait", "20", *args], check=True, capture_output=True, text=True, timeout=timeout)
+
+
+def split_escaped(line):
+    fields = []
+    current = ""
+    escape = False
+    for ch in line:
+        if escape:
+            current += ch
+            escape = False
+        elif ch == "\\":
+            escape = True
+        elif ch == ":":
+            fields.append(current)
+            current = ""
+        else:
+            current += ch
+    fields.append(current)
+    return fields
+
+
+def connections():
+    saved = run("-t", "-f", "UUID,TYPE,NAME", "connection", "show").stdout
+    active = run("-t", "-f", "UUID", "connection", "show", "--active").stdout
+    live = set(active.splitlines())
+    output = []
+    for line in saved.splitlines():
+        fields = split_escaped(line)
+        if len(fields) < 3:
+            continue
+        uuid, kind, name = fields[0], fields[1], ":".join(fields[2:])
+        if kind in TYPES and UUID.fullmatch(uuid):
+            output.append({"uuid": uuid, "kind": kind, "name": name, "active": uuid in live})
+    return sorted(output, key=lambda item: (not item["active"], item["name"].casefold()))
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("action", choices=("list", "connect", "disconnect"))
+    parser.add_argument("uuid", nargs="?")
+    args = parser.parse_args()
+    if args.action == "list":
+        print(json.dumps({"ok": True, "connections": connections()}))
+        return
+    if not args.uuid or not UUID.fullmatch(args.uuid):
+        parser.error("A valid connection UUID is required")
+    chosen = next((c for c in connections() if c["uuid"] == args.uuid), None)
+    if not chosen:
+        raise ValueError("Only an existing saved VPN/WireGuard connection can be changed")
+    if args.action == "connect":
+        run("connection", "up", "uuid", args.uuid, timeout=35)
+    else:
+        run("connection", "down", "uuid", args.uuid, timeout=35)
+    print(json.dumps({"ok": True, "connections": connections()}))
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except (OSError, ValueError, subprocess.SubprocessError) as exc:
+        print(json.dumps({"ok": False, "error": str(exc)}))
+        sys.exit(1)
