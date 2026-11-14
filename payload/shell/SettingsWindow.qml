@@ -62,6 +62,11 @@ PanelWindow {
             { t: "toggle", label: "Wallpaper slideshow", key: "slideshow" },
             { t: "slider", label: "Change wallpaper every", key: "slideshowMinutes", min: 5, max: 180, step: 5, unit: "min" },
             { t: "button", label: "Next wallpaper", button: "Shuffle", act: "nextWallpaper" } ] },
+        { id: "desktop", name: "Desktop widgets", icon: "󰍹", desc: "Optional, per-display clock, visualizer and island sizing.", rows: [
+            { t: "toggle", label: "Show desktop clock on this monitor", key: "mon:desktopClock" },
+            { t: "toggle", label: "Audio-reactive wallpaper visualizer", key: "mon:wallpaperVisualizer" },
+            { t: "slider", label: "Island panel scale for this monitor", key: "mon:panelScale", min: 0.7, max: 1.6, step: 0.05, unit: "×" },
+            { t: "info", label: "Configuration applies to", value: island.screen.name } ] },
         { id: "display", name: "Display", icon: "󰍹", desc: "Refresh rate, brightness and night light for the laptop screen.", rows: [
             { t: "choice", label: "Refresh rate", key: "hy:rate", options: [ { v: 60, l: "60 Hz" }, { v: 144, l: "144 Hz" } ] },
             { t: "toggle", label: "60 Hz on battery, back up when plugged in", key: "autoRefresh" },
@@ -170,12 +175,19 @@ PanelWindow {
         return out;
     }
     function val(key) {
+        if (key.startsWith("mon:")) return island.monitorOptions[key.slice(4)];
         if (key.startsWith("island:")) return island[key.slice(7)];
         if (key.startsWith("ext:")) return ext[key.slice(4)];
         if (key.startsWith("hy:")) return hy[key.slice(3)];
         return Prefs.p[key];
     }
     function setVal(key, v) {
+        if (key.startsWith("mon:")) {
+            const name = key.slice(4);
+            if (["desktopClock", "wallpaperVisualizer", "panelScale"].indexOf(name) >= 0)
+                Quickshell.execDetached(["python3", Quickshell.env("HOME") + "/.local/bin/aether-monitor", "set", island.screen.name, name, String(v)]);
+            return;
+        }
         if (key === "island:dnd") { if (island.dnd !== v) island.toggleDnd(); return; }
         if (key === "island:batSaver") { if (island.batSaver !== v) island.toggleBatSaver(); return; }
         if (key === "island:nightLight") { if (island.nightLight !== v) island.toggleNightLight(); return; }
