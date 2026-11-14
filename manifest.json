@@ -23,6 +23,14 @@
     "sha256": "c74a2cde2823ef44415c2cedbe66a52c350214b1678fae7d57f93ca1b68b8226",
     "mode": "0o755"
   },
+  "payload/bin/aether-lyrics": {
+    "sha256": "a3a509c32fdd8bb9b8a0176580e32346a35f8ca6eeafbe07aa4f1e2d0c703f92",
+    "mode": "0o644"
+  },
+  "payload/bin/aether-monitor": {
+    "sha256": "a2a9b8c5d6ecff5740dc3434d850d95c39c9b5a78d8228c264879016696ccdb1",
+    "mode": "0o644"
+  },
   "payload/bin/aether-pin": {
     "sha256": "dca6002d63aeff8fe4d21bbd1bc1895d64b57f460409a76389a27e3fd98804b2",
     "mode": "0o755"
@@ -46,6 +54,10 @@
   "payload/bin/aether-timer": {
     "sha256": "ba0f6c081fddfd166340ee96da29df2fe09f6ffe2630426d4f2c4732498adf6a",
     "mode": "0o755"
+  },
+  "payload/bin/aether-vpn": {
+    "sha256": "4620f7aa49a277d9cbe79f66f79df506f020f04dfd959cb92bb0ee8d7de40d89",
+    "mode": "0o644"
   },
   "payload/bin/aether-warp": {
     "sha256": "6d1dab1f6717b635efb361894984f76ca61f9fc51de1d32e14b970b1afd4ca67",
@@ -187,6 +199,10 @@
     "sha256": "081e180d25f3c34255b0982d7f98217667aa2b6c2d291f4c04e57de52cf82284",
     "mode": "0o644"
   },
+  "payload/shell/DesktopWidgets.qml": {
+    "sha256": "5d8dfd9fffa649959cb7496e57828807463d0d745b0b0b1b24439a1e73c110ae",
+    "mode": "0o644"
+  },
   "payload/shell/Displays.qml": {
     "sha256": "6743bea9f45b22c389446f1bc4928cecd4d199d7d097e9b208ded22c7263ec2d",
     "mode": "0o644"
@@ -229,6 +245,10 @@
   },
   "payload/shell/LockView.qml": {
     "sha256": "7c5fbb89e25c2dd61646c53fa94d8be6e141aaecabcd87b545517fb9135e5064",
+    "mode": "0o644"
+  },
+  "payload/shell/LyricsWindow.qml": {
+    "sha256": "ecd82f3b305072e3873387f171b82440ed45089fc1aaf6e7b749d474a5e8696a",
     "mode": "0o644"
   },
   "payload/shell/MatugenColors.qml": {
@@ -293,6 +313,10 @@
   },
   "payload/shell/Shell.qml": {
     "sha256": "ff9e4721bec0261e7e415db5e6f175ca39b5002770a43af1ae216648f6e2a868",
+    "mode": "0o644"
+  },
+  "payload/shell/SpectrumBars.qml": {
+    "sha256": "d1dfce8b8a179f1e4b664f89c71c4a524f9ed315a68fab1bca4c4a4ca887c671",
     "mode": "0o644"
   },
   "payload/shell/SysData.qml": {
@@ -602,6 +626,10 @@
   "payload/shell/taskmgr/sysmon.py": {
     "sha256": "0a2aa99c7199b94667d0b49395618cc93abaaae38c530fb285aadbdaf476896a",
     "mode": "0o755"
+  },
+  "payload/shell/visualizer/cava.conf": {
+    "sha256": "97cf463a21eedddc483ead1d9f4466f03878299a1b79cba0c17b45cdad369b51",
+    "mode": "0o644"
   },
   "payload/shell/volume/get_audio_state.py": {
     "sha256": "829af797a920e1205cb240dc652ef9a1c15e8bde70e6881e3edd95258e0789a9",
