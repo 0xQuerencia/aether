@@ -68,7 +68,7 @@
     "mode": "0o644"
   },
   "payload/config/aether/integration.lua": {
-    "sha256": "24d516f3f1b85786bf529a58d827293acdc6b1a51226af041197c70c78dc956f",
+    "sha256": "dc15417347dafafd3cb2dc78f23daf6909e6e1294f43b3e98135756f1187b00a",
     "mode": "0o644"
   },
   "payload/config/aether/matugen/colors.json.template": {
@@ -96,7 +96,7 @@
     "mode": "0o755"
   },
   "payload/scripts/aether-theme.py": {
-    "sha256": "1a8ad70920e46f423b82646a07f13dec6e47a6b822e207ae125c16392c2fcb54",
+    "sha256": "2bc6b9bc69cb4994afd26a4052613eab629922df4975f58c9babad7e342cdd54",
     "mode": "0o755"
   },
   "payload/scripts/caching.sh": {
@@ -316,7 +316,7 @@
     "mode": "0o644"
   },
   "payload/shell/SettingsWindow.qml": {
-    "sha256": "ad8e4b039a7c41354c7b2b21f24a4af4a5a29b1debd3036191f6cea32d8f9151",
+    "sha256": "bcb239c3830dbc559eb53b3682ddcf144f0ac97480fa89ccadde8cfd590c2631",
     "mode": "0o644"
   },
   "payload/shell/Shell.qml": {
@@ -360,7 +360,7 @@
     "mode": "0o644"
   },
   "payload/shell/applauncher/launcher_query.py": {
-    "sha256": "fe80e4c518e4c6fad0f12d3a8463914f70344d0f2d511d8005fc817cfb035f71",
+    "sha256": "46157ed7132da7c5dd86f63feb975108c4286af7d1596cdf0c0a9afb1873053f",
     "mode": "0o644"
   },
   "payload/shell/assets/headphones/SOURCES.md": {
@@ -492,7 +492,7 @@
     "mode": "0o644"
   },
   "payload/shell/panels/LauncherPanel.qml": {
-    "sha256": "da7ea960969bdd5eea5f5f63f3374b89ee2ffe29355689a1f295ed5b719bc6bb",
+    "sha256": "84dcf1dff1f08474f9712e2cbb1712239f25b69ccf30de2289a74b51d36f47e2",
     "mode": "0o644"
   },
   "payload/shell/panels/MediaPanel.qml": {
@@ -584,7 +584,7 @@
     "mode": "0o644"
   },
   "payload/shell/qmldir": {
-    "sha256": "ad5054d4745987e5e762511004956d7dc0f9c6fbdd34ec30db6e9871e57236e7",
+    "sha256": "7f4499724423f8a4fcd3e507dc7debe6ec22c44b63877c0c8c67ad90ca87fbbb",
     "mode": "0o644"
   },
   "payload/shell/settings/BluetoothPage.qml": {
