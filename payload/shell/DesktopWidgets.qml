@@ -9,6 +9,7 @@ Variants {
             id: desktop
             required property var modelData
             screen: modelData
+            visible: options.desktopClock || options.wallpaperVisualizer
             anchors { top: true; bottom: true; left: true; right: true }
             color: "transparent"
             exclusionMode: ExclusionMode.Ignore
