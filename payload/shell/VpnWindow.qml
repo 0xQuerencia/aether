@@ -57,19 +57,19 @@ PanelWindow {
         height: Math.min(parent.height - 80, 620)
         anchors.centerIn: parent
         radius: 24
-        color: "#111916"
-        border.width: 1; border.color: "#33483f"
+        color: vpn.island.mocha.base
+        border.width: 1; border.color: vpn.island.mocha.surface1
         ColumnLayout {
             anchors.fill: parent
             anchors.margins: 26
             spacing: 18
             RowLayout {
                 Layout.fillWidth: true
-                Text { text: "PRIVATE CONNECTIONS"; color: "#67c9a5"; font.family: "Inter"; font.pixelSize: 14; font.letterSpacing: 2; Layout.fillWidth: true }
-                Button { text: "Refresh"; enabled: !vpn.busy; onClicked: vpn.refresh() }
-                Button { text: "Close"; onClicked: vpn.island.vpnOpen = false }
+                Text { text: "PRIVATE CONNECTIONS"; color: vpn.island.accent; font.family: "Inter"; font.pixelSize: 14; font.letterSpacing: 2; Layout.fillWidth: true }
+                AetherButton { colors: vpn.island.mocha; uiScale: 1; text: "Refresh"; enabled: !vpn.busy; onClicked: vpn.refresh() }
+                AetherButton { colors: vpn.island.mocha; uiScale: 1; text: "Close"; onClicked: vpn.island.vpnOpen = false }
             }
-            Text { text: "Use your existing NetworkManager VPN and WireGuard profiles."; color: "#a9b8ae"; font.family: "Inter"; font.pixelSize: 13; wrapMode: Text.WordWrap; Layout.fillWidth: true }
+            Text { text: "Use your existing NetworkManager VPN and WireGuard profiles."; color: vpn.island.mocha.subtext0; font.family: "Inter"; font.pixelSize: 13; wrapMode: Text.WordWrap; Layout.fillWidth: true }
             ListView {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
@@ -81,16 +81,16 @@ PanelWindow {
                     width: ListView.view.width
                     height: 76
                     radius: 14
-                    color: "#1c2a23"
+                    color: AetherStyle.surface(vpn.island.mocha)
                     RowLayout {
                         anchors.fill: parent; anchors.margins: 13
                         spacing: 12
                         ColumnLayout {
                             Layout.fillWidth: true
-                            Text { Layout.fillWidth: true; text: modelData.name; color: "#e9f5ec"; font.family: "Inter"; font.pixelSize: 16; font.weight: Font.Medium; elide: Text.ElideRight }
-                            Text { text: (modelData.kind === "wireguard" ? "WireGuard" : "VPN") + (modelData.active ? " · Connected" : " · Disconnected"); color: modelData.active ? "#70d9ab" : "#a1b0a6"; font.family: "Inter"; font.pixelSize: 12 }
+                            Text { Layout.fillWidth: true; text: modelData.name; color: vpn.island.mocha.text; font.family: "Inter"; font.pixelSize: 16; font.weight: Font.Medium; elide: Text.ElideRight }
+                            Text { text: (modelData.kind === "wireguard" ? "WireGuard" : "VPN") + (modelData.active ? " · Connected" : " · Disconnected"); color: modelData.active ? vpn.island.accent : vpn.island.mocha.subtext0; font.family: "Inter"; font.pixelSize: 12 }
                         }
-                        Button {
+                        AetherButton { colors: vpn.island.mocha; uiScale: 1;
                             text: modelData.active ? "Disconnect" : "Connect"
                             enabled: !vpn.busy
                             Accessible.name: text + " " + modelData.name
@@ -99,8 +99,8 @@ PanelWindow {
                     }
                 }
             }
-            Text { visible: vpn.connections.length === 0 && !reader.running; Layout.fillWidth: true; text: "No saved VPN connections. Create one in NetworkManager first."; color: "#9ab2a1"; font.family: "Inter"; font.pixelSize: 13; wrapMode: Text.WordWrap }
-            Text { visible: vpn.error.length > 0; text: vpn.error; color: "#eab5a3"; font.family: "Inter"; wrapMode: Text.WordWrap; Layout.fillWidth: true }
+            Text { visible: vpn.connections.length === 0 && !reader.running; Layout.fillWidth: true; text: "No saved VPN connections. Create one in NetworkManager first."; color: vpn.island.mocha.subtext0; font.family: "Inter"; font.pixelSize: 13; wrapMode: Text.WordWrap }
+            Text { visible: vpn.error.length > 0; text: vpn.error; color: vpn.island.mocha.red; font.family: "Inter"; wrapMode: Text.WordWrap; Layout.fillWidth: true }
         }
     }
     Item { id: keys; focus: open; Keys.onEscapePressed: vpn.island.vpnOpen = false }
