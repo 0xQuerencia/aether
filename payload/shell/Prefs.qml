@@ -19,7 +19,7 @@ Singleton {
         animScale: 1.0, launcherResults: 6, notifSeconds: 4.5,
         overviewZoom: 0.30,
         batterySaverAuto: true, batterySaverRefresh: false, autoRefresh: false, sideMeters: true, sideWorkspaces: true,
-        slideshow: false, slideshowMinutes: 30, shotPreview: true, shotAnnotate: false
+        slideshow: false, slideshowMinutes: 30, shotPreview: true, shotAnnotate: false, mediaSpectrum: false
     })
     readonly property bool motionEnabled: !adapter.reducedMotion
     function duration(milliseconds) { return adapter.reducedMotion ? 0 : Math.round(milliseconds * adapter.animScale); }
@@ -65,6 +65,7 @@ Singleton {
             property bool slideshow: false
             property int slideshowMinutes: 30
             
+            property bool mediaSpectrum: false
             property bool shotPreview: true
             property bool shotAnnotate: false        // open the editor before saving
             
