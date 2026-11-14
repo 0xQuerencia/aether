@@ -68,42 +68,42 @@ PanelWindow {
                 Layout.fillWidth: true
                 ColumnLayout {
                     spacing: 6
-                    Text { text: "AETHER  /  HOME"; color: "#61c6a5"; font.family: "Inter"; font.pixelSize: 13; font.letterSpacing: 3 }
-                    Text { text: "Your space, at a glance."; color: "#eff6f0"; font.family: "Inter"; font.weight: Font.DemiBold; font.pixelSize: 32 }
+                    Text { text: "AETHER  /  HOME"; color: dash.island.accent; font.family: "Inter"; font.pixelSize: 13; font.letterSpacing: 3 }
+                    Text { text: "Your space, at a glance."; color: dash.island.mocha.text; font.family: "Inter"; font.weight: Font.DemiBold; font.pixelSize: 32 }
                 }
                 Item { Layout.fillWidth: true }
                 ColumnLayout {
-                    Text { Layout.alignment: Qt.AlignRight; text: Qt.formatTime(dash.now, Prefs.p.clock24h ? "HH:mm" : "h:mm AP"); color: "#eff6f0"; font.family: "Inter"; font.pixelSize: 34 }
-                    Text { Layout.alignment: Qt.AlignRight; text: Qt.formatDate(dash.now, "dddd, MMMM d"); color: "#8fa49a"; font.family: "Inter"; font.pixelSize: 13 }
+                    Text { Layout.alignment: Qt.AlignRight; text: Qt.formatTime(dash.now, Prefs.p.clock24h ? "HH:mm" : "h:mm AP"); color: dash.island.mocha.text; font.family: "Inter"; font.pixelSize: 34 }
+                    Text { Layout.alignment: Qt.AlignRight; text: Qt.formatDate(dash.now, "dddd, MMMM d"); color: dash.island.mocha.subtext0; font.family: "Inter"; font.pixelSize: 13 }
                 }
-                Button { text: "Close  ×"; Accessible.name: "Close Aether dashboard"; onClicked: dash.island.dashboardOpen = false }
+                AetherButton { colors: dash.island.mocha; uiScale: 1; text: "Close  ×"; Accessible.name: "Close Aether dashboard"; onClicked: dash.island.dashboardOpen = false }
             }
 
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 14
                 Rectangle {
-                    Layout.fillWidth: true; Layout.preferredHeight: 150; radius: 20; color: "#192320"
+                    Layout.fillWidth: true; Layout.preferredHeight: 150; radius: 20; color: AetherStyle.surface(dash.island.mocha)
                     ColumnLayout {
                         anchors.fill: parent; anchors.margins: 20; spacing: 8
-                        Text { text: "NOW PLAYING"; color: "#78cbb2"; font.family: "Inter"; font.pixelSize: 11; font.letterSpacing: 2 }
-                        Text { text: dash.island.musicData.title || "Nothing playing"; color: "#f1f5f2"; font.family: "Inter"; font.pixelSize: 22; font.weight: Font.Medium; elide: Text.ElideRight; Layout.fillWidth: true }
-                        Text { text: dash.island.musicData.artist || "Start playback in your favorite app"; color: "#a7b9ae"; font.family: "Inter"; font.pixelSize: 13 }
+                        Text { text: "NOW PLAYING"; color: dash.island.accent; font.family: "Inter"; font.pixelSize: 11; font.letterSpacing: 2 }
+                        Text { text: dash.island.musicData.title || "Nothing playing"; color: dash.island.mocha.text; font.family: "Inter"; font.pixelSize: 22; font.weight: Font.Medium; elide: Text.ElideRight; Layout.fillWidth: true }
+                        Text { text: dash.island.musicData.artist || "Start playback in your favorite app"; color: dash.island.mocha.subtext0; font.family: "Inter"; font.pixelSize: 13 }
                         Item { Layout.fillHeight: true }
-                        Button { text: "Synchronized lyrics"; onClicked: dash.openPanel("lyrics") }
+                        AetherButton { colors: dash.island.mocha; uiScale: 1; text: "Synchronized lyrics"; onClicked: dash.openPanel("lyrics") }
                     }
                 }
                 Rectangle {
-                    Layout.preferredWidth: 310; Layout.preferredHeight: 150; radius: 20; color: "#192320"
+                    Layout.preferredWidth: 310; Layout.preferredHeight: 150; radius: 20; color: AetherStyle.surface(dash.island.mocha)
                     ColumnLayout {
                         anchors.fill: parent; anchors.margins: 20; spacing: 10
-                        Text { text: "BATTERY"; color: "#78cbb2"; font.family: "Inter"; font.pixelSize: 11; font.letterSpacing: 2 }
-                        Text { text: dash.number(dash.battery.percent, "%"); color: "#f1f5f2"; font.family: "Inter"; font.pixelSize: 34; font.weight: Font.DemiBold }
-                        Text { text: dash.battery.status || "Battery information"; color: "#a7b9ae"; font.family: "Inter"; font.pixelSize: 12 }
+                        Text { text: "BATTERY"; color: dash.island.accent; font.family: "Inter"; font.pixelSize: 11; font.letterSpacing: 2 }
+                        Text { text: dash.number(dash.battery.percent, "%"); color: dash.island.mocha.text; font.family: "Inter"; font.pixelSize: 34; font.weight: Font.DemiBold }
+                        Text { text: dash.battery.status || "Battery information"; color: dash.island.mocha.subtext0; font.family: "Inter"; font.pixelSize: 12 }
                     }
                 }
             }
-            Text { text: "PERFORMANCE"; color: "#7d9e92"; font.family: "Inter"; font.pixelSize: 12; font.letterSpacing: 2 }
+            Text { text: "PERFORMANCE"; color: dash.island.mocha.subtext0; font.family: "Inter"; font.pixelSize: 12; font.letterSpacing: 2 }
             GridLayout {
                 Layout.fillWidth: true
                 columns: 3
@@ -114,18 +114,18 @@ PanelWindow {
                     property string note: ""
                     property real percent: 0
                     Layout.fillWidth: true; Layout.preferredHeight: 150
-                    radius: 18; color: "#18221e"; border.width: 1; border.color: "#26392f"
+                    radius: 18; color: AetherStyle.surface(dash.island.mocha); border.width: 1; border.color: dash.island.mocha.surface1
                     ColumnLayout {
                         anchors.fill: parent; anchors.margins: 18; spacing: 9
-                        Text { text: caption; color: "#9cbdad"; font.family: "Inter"; font.pixelSize: 12; font.weight: Font.Medium }
-                        Text { text: figure; color: "#eef6f0"; font.family: "Inter"; font.pixelSize: 29; font.weight: Font.DemiBold }
+                        Text { text: caption; color: dash.island.mocha.subtext0; font.family: "Inter"; font.pixelSize: 12; font.weight: Font.Medium }
+                        Text { text: figure; color: dash.island.mocha.text; font.family: "Inter"; font.pixelSize: 29; font.weight: Font.DemiBold }
                         Item { Layout.fillHeight: true }
                         Rectangle {
                             Layout.fillWidth: true; Layout.preferredHeight: 5
                             color: "#304339"; radius: 3
-                            Rectangle { height: parent.height; width: parent.width * Math.max(0, Math.min(100, percent)) / 100; radius: 3; color: "#64b69c" }
+                            Rectangle { height: parent.height; width: parent.width * Math.max(0, Math.min(100, percent)) / 100; radius: 3; color: dash.island.accent }
                         }
-                        Text { text: note; color: "#78988a"; font.family: "Inter"; font.pixelSize: 11; elide: Text.ElideRight; Layout.fillWidth: true }
+                        Text { text: note; color: dash.island.mocha.subtext0; font.family: "Inter"; font.pixelSize: 11; elide: Text.ElideRight; Layout.fillWidth: true }
                     }
                 }
                 MeterCard { caption: "CPU"; figure: dash.number(dash.cpu.total_percent, "%"); note: "Total processor load"; percent: dash.cpu.total_percent || 0 }
@@ -137,12 +137,12 @@ PanelWindow {
             }
             RowLayout {
                 Layout.fillWidth: true; spacing: 12
-                Button { text: "Task Manager"; onClicked: dash.openPanel("taskmgr") }
-                Button { text: "Audio Mixer"; onClicked: dash.openPanel("sound") }
-                Button { text: "VPN"; onClicked: dash.openPanel("vpn") }
-                Button { text: "Wallpapers"; onClicked: dash.openPanel("wallpaper") }
+                AetherButton { colors: dash.island.mocha; uiScale: 1; text: "Task Manager"; onClicked: dash.openPanel("taskmgr") }
+                AetherButton { colors: dash.island.mocha; uiScale: 1; text: "Audio Mixer"; onClicked: dash.openPanel("sound") }
+                AetherButton { colors: dash.island.mocha; uiScale: 1; text: "VPN"; onClicked: dash.openPanel("vpn") }
+                AetherButton { colors: dash.island.mocha; uiScale: 1; text: "Wallpapers"; onClicked: dash.openPanel("wallpaper") }
                 Item { Layout.fillWidth: true }
-                Text { text: "Esc  ·  close"; color: "#728d81"; font.family: "Inter"; font.pixelSize: 12 }
+                Text { text: "Esc  ·  close"; color: dash.island.mocha.subtext0; font.family: "Inter"; font.pixelSize: 12 }
             }
         }
     }
