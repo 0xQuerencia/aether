@@ -200,11 +200,11 @@
     "mode": "0o644"
   },
   "payload/shell/DashboardWindow.qml": {
-    "sha256": "fb6a72275026da40d6313192370bc61f9a8194785feafe951c819655abd88b85",
+    "sha256": "9ad790b274d396bb2df24c9c151229d7722b3edf4557d1ff7b1936399b3652bc",
     "mode": "0o644"
   },
   "payload/shell/DesktopWidgets.qml": {
-    "sha256": "5d8dfd9fffa649959cb7496e57828807463d0d745b0b0b1b24439a1e73c110ae",
+    "sha256": "da267e84d0e1fdfd0be638d15034c1755f7e139c8ea09b09a0f17106fabc2689",
     "mode": "0o644"
   },
   "payload/shell/Displays.qml": {
@@ -252,7 +252,7 @@
     "mode": "0o644"
   },
   "payload/shell/LyricsWindow.qml": {
-    "sha256": "ecd82f3b305072e3873387f171b82440ed45089fc1aaf6e7b749d474a5e8696a",
+    "sha256": "d08851d5e0701e2716803d9b72453b0c7e77eeb5677693aeb5b26724af4b5b5b",
     "mode": "0o644"
   },
   "payload/shell/MatugenColors.qml": {
@@ -296,7 +296,7 @@
     "mode": "0o644"
   },
   "payload/shell/Prefs.qml": {
-    "sha256": "aa553b7a0bc4592143c28f62c14ff8b3bcfd0675c79e83155da9dc4316ddd388",
+    "sha256": "2697105b18b2f6e0574c2872450a3fec3d95cd0360074496f432c760f99ad72a",
     "mode": "0o644"
   },
   "payload/shell/PressScale.qml": {
@@ -316,7 +316,7 @@
     "mode": "0o644"
   },
   "payload/shell/SettingsWindow.qml": {
-    "sha256": "bcb239c3830dbc559eb53b3682ddcf144f0ac97480fa89ccadde8cfd590c2631",
+    "sha256": "8a6bd12f864a49eb496fea57c4250a945e9a088b7d9db9d1873f109d653b779e",
     "mode": "0o644"
   },
   "payload/shell/Shell.qml": {
@@ -340,7 +340,7 @@
     "mode": "0o644"
   },
   "payload/shell/VpnWindow.qml": {
-    "sha256": "cc687c6cc24060319ea98f7141f544ab05ff552d7896395ee395f9ed8e09d63e",
+    "sha256": "7eec40679471eecde7d95890bc5a93ca8487bc864a6ef0f713bd13f649ac3284",
     "mode": "0o644"
   },
   "payload/shell/WindowRegistry.js": {
@@ -496,7 +496,7 @@
     "mode": "0o644"
   },
   "payload/shell/panels/MediaPanel.qml": {
-    "sha256": "2c3e79120381146115a659e80298133a4c8884b515f4248a0e2db823096eadf2",
+    "sha256": "67dd3ba510cd32500ea28cec775c12ab0a37c24773c3d5615e78d6066702da60",
     "mode": "0o644"
   },
   "payload/shell/panels/NotifHistPanel.qml": {
