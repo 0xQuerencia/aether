@@ -155,7 +155,8 @@ Item {
                         model: [
                             { ic: "󰒮", act: "previous", big: false },
                             { ic: media.playing ? "󰏤" : "󰐊", act: "play-pause", big: true },
-                            { ic: "󰒭", act: "next", big: false }
+                            { ic: "󰒭", act: "next", big: false },
+                            { ic: "󰍨", act: "lyrics", big: false }
                         ]
                         delegate: Rectangle {
                             required property var modelData
@@ -172,7 +173,7 @@ Item {
                                 font.family: "Iosevka Nerd Font"; font.pixelSize: island.s(modelData.big ? 20 : 17)
                                 color: "#ffffff"
                             }
-                            MouseArea { id: btn; anchors.fill: parent; hoverEnabled: true; onClicked: media.control(modelData.act) }
+                            MouseArea { id: btn; anchors.fill: parent; hoverEnabled: true; onClicked: { if (modelData.act === "lyrics") media.island.lyricsOpen = true; else media.control(modelData.act); } }
                         }
                     }
                 }
