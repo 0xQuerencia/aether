@@ -1,0 +1,86 @@
+#!/usr/bin/env python3
+"""Per-monitor optional shell presentation settings, stored outside Hyprland config."""
+import argparse
+import json
+import os
+from pathlib import Path
+import re
+import secrets
+
+ROOT = Path(os.environ.get("XDG_CONFIG_HOME", str(Path.home() / ".config"))) / "aether" / "monitors"
+FIELDS = {"desktopClock": bool, "wallpaperVisualizer": bool, "panelScale": float}
+DEFAULTS = {"desktopClock": False, "wallpaperVisualizer": False, "panelScale": 1.1}
+
+
+def path_for(monitor):
+    if not re.fullmatch(r"[A-Za-z0-9_.-]{1,80}", monitor) or monitor in (".", ".."):
+        raise ValueError("Invalid monitor name")
+    return ROOT / (monitor + ".json")
+
+
+def get(monitor):
+    path = path_for(monitor)
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (ValueError, OSError):
+        value = {}
+    clean = DEFAULTS.copy()
+    if isinstance(value, dict):
+        for key, expected in FIELDS.items():
+            v = value.get(key)
+            if type(v) is expected:
+                clean[key] = v
+    clean["panelScale"] = max(0.7, min(1.6, clean["panelScale"]))
+    return clean
+
+
+def set_value(monitor, field, value):
+    if field not in FIELDS:
+        raise ValueError("Unknown monitor setting")
+    if field == "panelScale":
+        new = float(value)
+        if not 0.7 <= new <= 1.6:
+            raise ValueError("panelScale must be 0.7–1.6")
+    elif value in ("on", "true", "1"):
+        new = True
+    elif value in ("off", "false", "0"):
+        new = False
+    elif value == "toggle":
+        new = not get(monitor)[field]
+    else:
+        raise ValueError("Expected on/off/toggle")
+    data = get(monitor)
+    data[field] = new
+    ROOT.mkdir(parents=True, exist_ok=True, mode=0o700)
+    ROOT.chmod(0o700)
+    target = path_for(monitor)
+    temp = ROOT / ("." + secrets.token_hex(8))
+    with temp.open("x", encoding="utf-8") as stream:
+        json.dump(data, stream, indent=2)
+        stream.write("\n")
+    temp.chmod(0o600)
+    temp.replace(target)
+    return data
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("action", choices=("get", "set"))
+    parser.add_argument("monitor")
+    parser.add_argument("field", nargs="?")
+    parser.add_argument("value", nargs="?")
+    args = parser.parse_args()
+    if args.action == "get":
+        output = get(args.monitor)
+    else:
+        if not args.field or not args.value:
+            parser.error("set requires FIELD VALUE")
+        output = set_value(args.monitor, args.field, args.value)
+    print(json.dumps(output))
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except (ValueError, OSError) as exc:
+        raise SystemExit("aether-monitor: " + str(exc))
