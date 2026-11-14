@@ -33,6 +33,9 @@ ShellRoot {
         function tasks() { IslandRegistry.invoke("tasks"); }
         function control() { IslandRegistry.invoke("control"); }
         function music() { IslandRegistry.invoke("music"); }
+        function lyrics() { IslandRegistry.invoke("lyrics"); }
+        function dashboard() { IslandRegistry.invoke("dashboard"); }
+        function vpn() { IslandRegistry.invoke("vpn"); }
         function power() { IslandRegistry.invoke("power"); }
         function clipboard() { IslandRegistry.invoke("clipboard"); }
         function emoji() { IslandRegistry.invoke("emoji"); }
@@ -64,6 +67,7 @@ ShellRoot {
     }
 
     ScreenPins {}
+    DesktopWidgets {}
     Island {}
     OriginalIsland {}
 }
