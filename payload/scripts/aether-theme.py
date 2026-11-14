@@ -84,6 +84,19 @@ def apply_wallpaper(path, scheme='scheme-tonal-spot'):
  known=next((name for name in THEMES if wallpaper==(HOME/'.local/share/aether/wallpapers'/f'{name}.png').resolve()),None)
  seed=THEMES[known][1] if known and scheme=='scheme-tonal-spot' else None
  return apply_source(known or 'wallpaper',THEMES[known][0] if known else wallpaper.stem,wallpaper,seed,scheme,mode='wallpaper')
+def recolor_current(scheme):
+ if scheme not in ('scheme-tonal-spot','scheme-neutral','scheme-content'):
+  raise ValueError('Unsupported palette variant')
+ try:
+  data=json.loads((STATE/'current.json').read_text())
+  wallpaper=Path(data.get('wallpaper','')).expanduser().resolve()
+ except (OSError,ValueError):
+  raise ValueError('Choose a wallpaper before changing its scheme')
+ if not wallpaper.is_file():
+  raise FileNotFoundError('Current wallpaper is unavailable')
+ return apply_source(data.get('id','wallpaper'),data.get('label','Wallpaper'),wallpaper,
+                     scheme=scheme,change_wallpaper=False,mode='palette')
+
 def palette_data():
  palettes=json.loads((HOME/'.config/hypr/aether-palettes.json').read_text())
  for item in palettes: item['kind']='palette'
@@ -99,6 +112,7 @@ def main():
   fcntl.flock(lock,fcntl.LOCK_EX)
   action=sys.argv[1] if len(sys.argv)>1 else 'list'
   if action=='palette-data': return palette_data()
+  if action=='recolor': return recolor_current(sys.argv[2])
   if action=='wallpaper': return apply_wallpaper(sys.argv[2],sys.argv[3] if len(sys.argv)>3 else 'scheme-tonal-spot')
   if action=='list':
    return [{'id':key,'label':value[0],'accent':value[1],'wallpaper':str(HOME/'.local/share/aether/wallpapers'/f'{key}.png')} for key,value in THEMES.items()]
