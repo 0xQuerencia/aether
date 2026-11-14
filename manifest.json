@@ -204,7 +204,7 @@
     "mode": "0o644"
   },
   "payload/shell/DesktopWidgets.qml": {
-    "sha256": "da267e84d0e1fdfd0be638d15034c1755f7e139c8ea09b09a0f17106fabc2689",
+    "sha256": "09e57f1ec662ea8c55a692d726a5d1a61d7f22137846f9a67cd1500a178d9d86",
     "mode": "0o644"
   },
   "payload/shell/Displays.qml": {
@@ -224,7 +224,7 @@
     "mode": "0o644"
   },
   "payload/shell/Island.qml": {
-    "sha256": "bc63a125986f9f346eae451efaa44e45f707c448779753b6f14e4ffe4c3eb6a0",
+    "sha256": "345748ccfee394c6837cb780377568653cb7273497b97fb4e77e07f808352d25",
     "mode": "0o644"
   },
   "payload/shell/IslandAppTail.qml": {
@@ -272,7 +272,7 @@
     "mode": "0o644"
   },
   "payload/shell/OriginalIsland.qml": {
-    "sha256": "ac0a78f5d8f77a581ddd64869e0603a6f7063ea1ceb90d32c0dfede6b2451b45",
+    "sha256": "9688450b60509e68ec2ab70a7cdfeef865194cd17b21de6052c6c364d2db9c24",
     "mode": "0o644"
   },
   "payload/shell/PalettePicker.qml": {
