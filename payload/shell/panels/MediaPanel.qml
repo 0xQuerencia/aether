@@ -47,6 +47,14 @@ Item {
             opacity: 0.85
         }
         Rectangle { anchors.fill: parent; color: Qt.rgba(0, 0, 0, 0.38) }
+        SpectrumBars {
+            anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
+            anchors.margins: island.s(12); height: island.s(46)
+            accent: island.accent
+            opacity: 0.25
+            active: Prefs.p.mediaSpectrum && media.playing && media.visible && !island.lyricsOpen
+            visible: active
+        }
 
         RowLayout {
             anchors.fill: parent
