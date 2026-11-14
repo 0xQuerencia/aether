@@ -12,7 +12,7 @@ PanelWindow {
     readonly property var media: island.musicData
     readonly property string signature: (media.title || "") + "\u0000" + (media.artist || "") + "\u0000" + (media.length || "0")
     property var lines: []
-    property string state: "idle"
+    property string lyricsStatus: "idle"
     readonly property real elapsed: Number(media.position || 0)
     readonly property int selected: {
         let idx = -1;
@@ -39,7 +39,7 @@ PanelWindow {
     Timer { id: fetch; interval: 250; onTriggered: {
         lyricReader.running = false;
         lyrics.lines = [];
-        lyrics.state = "loading";
+        lyrics.lyricsStatus = "loading";
         lyricReader.command = ["python3", Quickshell.env("HOME") + "/.local/bin/aether-lyrics",
                               lyrics.media.title || "", lyrics.media.artist || "", String(lyrics.media.length || 0)];
         lyricReader.running = true;
@@ -48,8 +48,8 @@ PanelWindow {
         id: lyricReader
         stdout: StdioCollector {
             onStreamFinished: {
-                try { const data = JSON.parse(this.text); lyrics.lines = data.lines || []; lyrics.state = data.status || "unavailable"; }
-                catch (e) { lyrics.state = "unavailable"; lyrics.lines = []; }
+                try { const data = JSON.parse(this.text); lyrics.lines = data.lines || []; lyrics.lyricsStatus = data.status || "unavailable"; }
+                catch (e) { lyrics.lyricsStatus = "unavailable"; lyrics.lines = []; }
             }
         }
     }
@@ -106,15 +106,15 @@ PanelWindow {
                 Text {
                     anchors.centerIn: parent
                     visible: lyricList.count === 0
-                    text: lyrics.state === "loading" ? "Finding synchronized lyrics…" :
-                          lyrics.state === "rate-limited" ? "Lyrics service is busy. Try again later." :
-                          lyrics.state === "offline" ? "Lyrics unavailable offline." :
+                    text: lyrics.lyricsStatus === "loading" ? "Finding synchronized lyrics…" :
+                          lyrics.lyricsStatus === "rate-limited" ? "Lyrics service is busy. Try again later." :
+                          lyrics.lyricsStatus === "offline" ? "Lyrics unavailable offline." :
                           "No synchronized lyrics found for this track."
                     color: "#9da9a4"
                     font.family: "Inter"; font.pixelSize: 15
                 }
             }
-            Text { Layout.alignment: Qt.AlignHCenter; text: lyrics.state === "local" ? "LOCAL LRC" : "LRCLIB · synced when available"; color: "#73817b"; font.family: "Inter"; font.pixelSize: 11 }
+            Text { Layout.alignment: Qt.AlignHCenter; text: lyrics.lyricsStatus === "local" ? "LOCAL LRC" : "LRCLIB · synced when available"; color: "#73817b"; font.family: "Inter"; font.pixelSize: 11 }
         }
     }
     Item { id: keys; focus: open; Keys.onEscapePressed: lyrics.close() }
