@@ -78,6 +78,9 @@ Variants {
                 function tasks() { islandWindow.openTasks(); }
                 function launcher()   { islandWindow.openLauncher() }
                 function control()    { islandWindow.controlOpen = !islandWindow.controlOpen }
+                function lyrics()     { islandWindow.lyricsOpen = !islandWindow.lyricsOpen; }
+                function dashboard()  { islandWindow.dashboardOpen = !islandWindow.dashboardOpen; }
+                function vpn()        { islandWindow.vpnOpen = !islandWindow.vpnOpen; }
                 function power()      { islandWindow.openPower() }
                 function clipboard()  { islandWindow.openClipboard() }
                 function emoji()      { if (islandWindow.mode === "emoji") { islandWindow.mode = "collapsed"; islandWindow.updateMode(); } else { islandWindow.openEmoji(); } }
@@ -102,6 +105,9 @@ Variants {
                 function close() {
                     islandWindow.paletteOpen = false;
                     islandWindow.settingsOpen = false;
+                    islandWindow.lyricsOpen = false;
+                    islandWindow.dashboardOpen = false;
+                    islandWindow.vpnOpen = false;
                     islandWindow.niriOpen = false;
                     islandWindow.powerMenuOpen = false;
                     islandWindow.taskMgrOpen = false;
@@ -153,7 +159,7 @@ Variants {
                 return value.startsWith("/") ? "file://" + value : "image://icon/" + value;
             }
             
-            property real panelScale: 1.10
+            property real panelScale: monitorPrefs.panelScale
             function ps(val) { return s(val) * panelScale; }
 
             property int topMargin:  s(Prefs.p.topGap)            // Settings › Bar & Island
@@ -221,6 +227,13 @@ Variants {
             PowerOverlay { island: islandWindow; screen: islandWindow.screen }
             WorkspaceOverview { id: workspaceOverview; island: islandWindow; screen: islandWindow.screen }
             SettingsWindow { island: islandWindow; screen: islandWindow.screen }
+            property bool lyricsOpen: false
+            property bool dashboardOpen: false
+            property bool vpnOpen: false
+            LyricsWindow { island: islandWindow; screen: islandWindow.screen }
+            DashboardWindow { island: islandWindow; screen: islandWindow.screen }
+            VpnWindow { island: islandWindow; screen: islandWindow.screen }
+            MonitorPrefs { id: monitorPrefs; monitorName: islandWindow.screen.name }
             property bool taskMgrOpen: false
             TaskManager { island: islandWindow; screen: islandWindow.screen }
             property var mocha: _colors            // exposed so panels can access island.mocha.red etc.
