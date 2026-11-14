@@ -103,6 +103,8 @@ PanelWindow {
             { t: "slider", label: "Pointer speed", key: "hy:input:sensitivity", min: -1.0, max: 1.0, step: 0.05, unit: "" },
             { t: "slider", label: "Key repeat rate", key: "hy:input:repeat_rate", min: 10, max: 60, step: 1, unit: "/s" },
             { t: "slider", label: "Key repeat delay", key: "hy:input:repeat_delay", min: 150, max: 800, step: 10, unit: "ms" } ] },
+        { id: "media", name: "Music", icon: "󰝚", desc: "Optional live music effects.", rows: [
+            { t: "toggle", label: "Show audio spectrum behind the island music player (requires cava)", key: "mediaSpectrum" } ] },
         { id: "motion", name: "Motion", icon: "󰑓", desc: "Interface motion and transition speed.", rows: [
             { t: "toggle", label: "Reduce interface motion", key: "reducedMotion" },
             { t: "slider", label: "Animation duration", key: "animScale", min: 0.4, max: 2.0, step: 0.05, unit: "×" } ] },
