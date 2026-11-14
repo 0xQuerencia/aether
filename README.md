@@ -52,6 +52,14 @@ Or use the flags directly:
 ./install.sh --apply --wallpapers --with-warp
 ```
 
+## Optional desktop experience
+
+Aether now includes an opt-in fullscreen performance dashboard, synchronized LRC lyrics, a locally rendered CAVA music spectrum, a wallpaper spectrum/desktop clock, per-monitor presentation preferences, a NetworkManager VPN switcher, and launcher actions for themes and common panels.
+
+The existing per-app sound mixer, task manager and notification history remain the canonical implementations. Try **Alt+Shift+D** for the dashboard, **Alt+Shift+L** for lyrics, or **Alt+Shift+V** for VPN. Use `@` in the launcher to search actions. CAVA is optional, and the wallpaper spectrum/clock start disabled.
+
+See [Experience setup and privacy notes](docs/EXPERIENCE.md).
+
 ## Warp
 
 Warp is built from source against your installed Hyprland headers. I don't ship a compiled plugin. The loader checks the build against the compositor you're running and falls back to normal window behavior if they don't match.
