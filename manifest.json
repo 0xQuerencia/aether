@@ -200,7 +200,7 @@
     "mode": "0o644"
   },
   "payload/shell/DashboardWindow.qml": {
-    "sha256": "e6610a049854e52617cd607a956ba76199e5602099e9d4ebf781880db2627528",
+    "sha256": "fb6a72275026da40d6313192370bc61f9a8194785feafe951c819655abd88b85",
     "mode": "0o644"
   },
   "payload/shell/DesktopWidgets.qml": {
@@ -224,7 +224,7 @@
     "mode": "0o644"
   },
   "payload/shell/Island.qml": {
-    "sha256": "3b8a235a6d24389a0973c8a2c0ee850b0a4d45322711c40eadb6f88bb2d6446b",
+    "sha256": "bc63a125986f9f346eae451efaa44e45f707c448779753b6f14e4ffe4c3eb6a0",
     "mode": "0o644"
   },
   "payload/shell/IslandAppTail.qml": {
@@ -264,7 +264,7 @@
     "mode": "0o644"
   },
   "payload/shell/MonitorPrefs.qml": {
-    "sha256": "cc164bfdc3449d8df6a8613c572d9c0c07f16accf94d4cd98ae7bcd39d34d668",
+    "sha256": "8314fa66502909a0f1729ad52ddc8147a7941d6a2fe237e081cfd63af93737bc",
     "mode": "0o644"
   },
   "payload/shell/Notifs.qml": {
@@ -272,7 +272,7 @@
     "mode": "0o644"
   },
   "payload/shell/OriginalIsland.qml": {
-    "sha256": "ae7edb0d4ef812e914bbe4915c478bcfc0ce7dfa3835ff3cd9bfdfb2d0b27122",
+    "sha256": "ac0a78f5d8f77a581ddd64869e0603a6f7063ea1ceb90d32c0dfede6b2451b45",
     "mode": "0o644"
   },
   "payload/shell/PalettePicker.qml": {
@@ -320,7 +320,7 @@
     "mode": "0o644"
   },
   "payload/shell/Shell.qml": {
-    "sha256": "e82c16c982facd09a805e3ac3f27b71ed27f4e06f4170eb1a1c8a98d3f69320c",
+    "sha256": "59c9b960f6391b88e7670e1a050003449cd47cf8675f5df3187367aaac611d6f",
     "mode": "0o644"
   },
   "payload/shell/SpectrumBars.qml": {
@@ -340,7 +340,7 @@
     "mode": "0o644"
   },
   "payload/shell/VpnWindow.qml": {
-    "sha256": "fccb98326e8dca4772f975afd486f6a8b472bc3aa9f6895e3f0dde1e85ab54cd",
+    "sha256": "cc687c6cc24060319ea98f7141f544ab05ff552d7896395ee395f9ed8e09d63e",
     "mode": "0o644"
   },
   "payload/shell/WindowRegistry.js": {
@@ -496,7 +496,7 @@
     "mode": "0o644"
   },
   "payload/shell/panels/MediaPanel.qml": {
-    "sha256": "4b55ff92e06988d82a3cf0166312b262167c23b7b42056ebe482e446be1dda9b",
+    "sha256": "2c3e79120381146115a659e80298133a4c8884b515f4248a0e2db823096eadf2",
     "mode": "0o644"
   },
   "payload/shell/panels/NotifHistPanel.qml": {
