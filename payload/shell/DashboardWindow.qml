@@ -40,7 +40,7 @@ PanelWindow {
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
-    onOpenChanged: if (open) Qt.callLater(() => keyboard.forceActiveFocus())
+    onOpenChanged: if (open) Qt.callLater(() => dashboardScroll.forceActiveFocus())
     Timer { interval: 15000; repeat: true; running: dash.open; onTriggered: dash.now = new Date() }
     Process {
         running: dash.open
@@ -55,6 +55,8 @@ PanelWindow {
 
     Rectangle { anchors.fill: parent; color: Qt.rgba(0, 0, 0, 0.85) }
     Flickable {
+        id: dashboardScroll
+        focus: dash.open
         anchors.fill: parent
         anchors.margins: 48
         clip: true
@@ -146,5 +148,5 @@ PanelWindow {
             }
         }
     }
-    Item { id: keyboard; focus: open; Keys.onEscapePressed: dash.island.dashboardOpen = false }
+    Shortcut { sequence: "Escape"; enabled: dash.open; onActivated: dash.island.dashboardOpen = false }
 }
