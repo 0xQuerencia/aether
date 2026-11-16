@@ -40,7 +40,7 @@ PanelWindow {
         lyricReader.running = false;
         lyrics.lines = [];
         lyrics.lyricsStatus = "loading";
-        lyricReader.command = ["python3", Quickshell.env("HOME") + "/.local/bin/aether-lyrics",
+        lyricReader.command = ["python3", Quickshell.env("HOME") + "/.local/bin/aether-lyrics", "--",
                               lyrics.media.title || "", lyrics.media.artist || "", String(lyrics.media.length || 0)];
         lyricReader.running = true;
     } }
