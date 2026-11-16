@@ -1,5 +1,6 @@
 """Offline tests for Aether's optional desktop/media helpers."""
 import importlib.machinery
+from concurrent.futures import ThreadPoolExecutor
 import importlib.util
 from pathlib import Path
 import sys
@@ -42,6 +43,19 @@ class ExperienceTests(unittest.TestCase):
                 monitor.set_value("../oops", "desktopClock", "on")
             with self.assertRaises(ValueError):
                 monitor.set_value("DP-1", "panelScale", "4")
+
+    def test_monitor_toggles_are_serialized(self):
+        monitor = load("aether_monitor_concurrency_test", "payload/bin/aether-monitor")
+        with tempfile.TemporaryDirectory() as directory:
+            monitor.ROOT = Path(directory)
+            with ThreadPoolExecutor(max_workers=6) as pool:
+                list(pool.map(lambda _: monitor.set_value("eDP-1", "desktopClock", "toggle"), range(20)))
+            self.assertFalse(monitor.get("eDP-1")["desktopClock"])
+
+    def test_lrclib_retry_after(self):
+        lyrics = load("aether_lyrics_retry_test", "payload/bin/aether-lyrics")
+        self.assertEqual(lyrics.retry_seconds("120"), 120)
+        self.assertEqual(lyrics.retry_seconds(None), 60)
 
     def test_vpn_parsing_and_id_check(self):
         vpn = load("aether_vpn_test", "payload/bin/aether-vpn")
