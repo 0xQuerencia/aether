@@ -43,7 +43,7 @@ Item {
                     opacity: 0.65 + 0.35 * (spectrum.levels[index] || 0)
                     Behavior on height {
                         enabled: !Prefs.p.reducedMotion
-                        NumberAnimation { duration: 85; easing.type: Easing.OutQuad }
+                        NumberAnimation { duration: 48; easing.type: Easing.OutSine }
                     }
                 }
             }
