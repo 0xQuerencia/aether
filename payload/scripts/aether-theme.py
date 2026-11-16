@@ -59,7 +59,7 @@ def apply_source(name, label, wallpaper, seed=None, scheme='scheme-tonal-spot', 
    (HOME/'.cache/current_wallpaper').write_text(str(wallpaper)+'\n')
    colors=json.loads((HOME/'.cache/quickshell/colors/qs_colors.json').read_text())
    (STATE/'wallpaper-palette.json').write_text(json.dumps({'path':str(wallpaper),'colors':[colors[key] for key in ['blue','sapphire','peach','text','surface0','overlay0']]}))
-  current_wallpaper=str(wallpaper) if change_wallpaper else (data['wallpapers'][0]['path'] if data['wallpapers'] else '')
+  current_wallpaper=str(wallpaper) if change_wallpaper else (data['wallpapers'][0]['path'] if data['wallpapers'] else str(wallpaper))
   (STATE/'current.json').write_text(json.dumps({'id':name,'label':label,'wallpaper':current_wallpaper,'mode':mode}))
   for item in data['files']:
    file=Path(item['path']);item['after']=hashlib.sha256(file.read_bytes()).hexdigest() if file.exists() else None
