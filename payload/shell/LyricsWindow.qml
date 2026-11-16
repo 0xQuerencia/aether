@@ -64,6 +64,10 @@ PanelWindow {
         height: Math.min(parent.height - 64, 760)
         anchors.centerIn: parent
         radius: 26
+        opacity: lyrics.open ? 1 : 0
+        scale: lyrics.open ? 1 : 0.975
+        Behavior on opacity { NumberAnimation { duration: Prefs.duration(160); easing.type: Easing.OutCubic } }
+        Behavior on scale { NumberAnimation { duration: Prefs.duration(220); easing.type: Easing.OutCubic } }
         color: lyrics.island.mocha.base
         border.width: 1
         border.color: lyrics.island.mocha.surface1
