@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Per-monitor optional shell presentation settings, stored outside Hyprland config."""
 import argparse
+import fcntl
 import json
 import os
 from pathlib import Path
@@ -46,20 +47,25 @@ def set_value(monitor, field, value):
     elif value in ("off", "false", "0"):
         new = False
     elif value == "toggle":
-        new = not get(monitor)[field]
+        new = None  # resolved while holding the per-monitor lock
     else:
         raise ValueError("Expected on/off/toggle")
-    data = get(monitor)
-    data[field] = new
     ROOT.mkdir(parents=True, exist_ok=True, mode=0o700)
     ROOT.chmod(0o700)
     target = path_for(monitor)
-    temp = ROOT / ("." + secrets.token_hex(8))
-    with temp.open("x", encoding="utf-8") as stream:
-        json.dump(data, stream, indent=2)
-        stream.write("\n")
-    temp.chmod(0o600)
-    temp.replace(target)
+    with (ROOT / (target.name + ".lock")).open("a", encoding="utf-8") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        data = get(monitor)
+        data[field] = not data[field] if value == "toggle" else new
+        temp = ROOT / ("." + secrets.token_hex(12))
+        try:
+            with temp.open("x", encoding="utf-8") as stream:
+                json.dump(data, stream, indent=2)
+                stream.write("\n")
+            temp.chmod(0o600)
+            temp.replace(target)
+        finally:
+            temp.unlink(missing_ok=True)
     return data
 
 
