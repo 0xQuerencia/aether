@@ -82,6 +82,7 @@ Variants {
                     const next = !islandWindow[prop];
                     islandWindow.lyricsOpen = false; islandWindow.dashboardOpen = false; islandWindow.vpnOpen = false;
                     islandWindow.controlOpen = false; islandWindow.settingsOpen = false;
+                    islandWindow.paletteOpen = false;
                     islandWindow.taskMgrOpen = false; islandWindow.niriOpen = false;
                     islandWindow.powerMenuOpen = false; islandWindow.mode = "collapsed";
                     islandWindow.updateMode();
@@ -1077,6 +1078,10 @@ Variants {
             }
 
             function openLauncher() {
+                islandWindow.lyricsOpen = false;
+                islandWindow.dashboardOpen = false;
+                islandWindow.vpnOpen = false;
+                islandWindow.paletteOpen = false;
                 islandWindow.searchQuery = "";
                 islandWindow.filterApps();
                 islandWindow.controlOpen = false;
@@ -1902,7 +1907,7 @@ Variants {
             
             Timer {
                 interval: 1000; repeat: true
-                running: islandWindow.mode === "card"
+                running: islandWindow.mode === "card" || islandWindow.lyricsOpen
                 onTriggered: { musicRefresh.running = false; musicRefresh.running = true; }
             }
 
