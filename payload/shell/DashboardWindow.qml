@@ -57,6 +57,10 @@ PanelWindow {
     Flickable {
         id: dashboardScroll
         focus: dash.open
+        opacity: dash.open ? 1 : 0
+        scale: dash.open ? 1 : 0.99
+        Behavior on opacity { NumberAnimation { duration: Prefs.duration(150); easing.type: Easing.OutCubic } }
+        Behavior on scale { NumberAnimation { duration: Prefs.duration(210); easing.type: Easing.OutCubic } }
         anchors.fill: parent
         anchors.margins: 48
         clip: true
