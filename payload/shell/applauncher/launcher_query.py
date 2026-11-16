@@ -95,11 +95,11 @@ def action(kind,payload,origin=None):
   return
  if kind=='theme':
   if payload not in THEMES: raise ValueError('Unknown theme')
-  subprocess.run(['python3',str(HOME/'.config/hypr/scripts/aether-theme.py'),'apply',payload],check=True,timeout=90)
+  subprocess.run(['python3',str(HOME/'.config/hypr/scripts/aether-theme.py'),'apply',payload],check=True)
   return
  if kind=='scheme':
   if payload not in SCHEMES: raise ValueError('Unknown colour scheme')
-  subprocess.run(['python3',str(HOME/'.config/hypr/scripts/aether-theme.py'),'recolor',payload],check=True,timeout=90)
+  subprocess.run(['python3',str(HOME/'.config/hypr/scripts/aether-theme.py'),'recolor',payload],check=True)
   return
  if kind in ('app','command'):
   clean=re.sub(r'%[fFuUdDnNickvm]','',payload).strip()
