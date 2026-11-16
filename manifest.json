@@ -176,7 +176,7 @@
     "mode": "0o644"
   },
   "payload/shell/AetherButton.qml": {
-    "sha256": "978d935566b9863b646c190d6ffef0eeb2e24b111273e3cd6b3ce4d2444160dc",
+    "sha256": "9dba5bea0762bf50002160d31dddab4b9f3f43b1bec88d8beb1bf968fb3a5149",
     "mode": "0o644"
   },
   "payload/shell/AetherField.qml": {
@@ -200,7 +200,7 @@
     "mode": "0o644"
   },
   "payload/shell/DashboardWindow.qml": {
-    "sha256": "2023d2611d6bbfb8db195df929d7bdd710aa0274aedd5f95adaeb9df4bb58d64",
+    "sha256": "b49af5a801fd6053d151297cf4e4dc26c0e536ba1b4aa5de74b7b0ba7a620320",
     "mode": "0o644"
   },
   "payload/shell/DesktopWidgets.qml": {
@@ -252,7 +252,7 @@
     "mode": "0o644"
   },
   "payload/shell/LyricsWindow.qml": {
-    "sha256": "8718186a5adb38650d16c6238c341d82f59c21ce85a2659202d449887cac966f",
+    "sha256": "838450c56e1615ede0bc5e86a61ad7eb24342fa6d05d1422c88a3479575ce22c",
     "mode": "0o644"
   },
   "payload/shell/MatugenColors.qml": {
@@ -296,7 +296,7 @@
     "mode": "0o644"
   },
   "payload/shell/Prefs.qml": {
-    "sha256": "2697105b18b2f6e0574c2872450a3fec3d95cd0360074496f432c760f99ad72a",
+    "sha256": "58a4b78cbe0f0ff061224540b733320f8dfe65bf7c67e121e15183d6a8b4bf2b",
     "mode": "0o644"
   },
   "payload/shell/PressScale.qml": {
@@ -316,7 +316,7 @@
     "mode": "0o644"
   },
   "payload/shell/SettingsWindow.qml": {
-    "sha256": "8a6bd12f864a49eb496fea57c4250a945e9a088b7d9db9d1873f109d653b779e",
+    "sha256": "1384b5d599b6f2fa0a1f487af9d5b4dcc51d6eab9523402872a936ba11a5474e",
     "mode": "0o644"
   },
   "payload/shell/Shell.qml": {
@@ -324,7 +324,7 @@
     "mode": "0o644"
   },
   "payload/shell/SpectrumBars.qml": {
-    "sha256": "f439949e86fc737c61f75ebd67f26727bf08f670a1759a2e8b5a002b79c42752",
+    "sha256": "e36aed7da7dd9c09dea742a48014fb863e15a60e056af845a76ba9517c00912c",
     "mode": "0o644"
   },
   "payload/shell/SysData.qml": {
@@ -340,7 +340,7 @@
     "mode": "0o644"
   },
   "payload/shell/VpnWindow.qml": {
-    "sha256": "113bcce81d460b4d0e4995ead538fd5f98872c949a7994c15bf2bd6ff538d35b",
+    "sha256": "5946f2d50a045bec9a355c2fd5d85dd62c3ce5396fb001846d2c929a04f55ab8",
     "mode": "0o644"
   },
   "payload/shell/WindowRegistry.js": {
@@ -496,7 +496,7 @@
     "mode": "0o644"
   },
   "payload/shell/panels/MediaPanel.qml": {
-    "sha256": "67dd3ba510cd32500ea28cec775c12ab0a37c24773c3d5615e78d6066702da60",
+    "sha256": "c983f32a99190ce79500fa402ef8a9b04b958bb4c93ae8d337272427d001c0df",
     "mode": "0o644"
   },
   "payload/shell/panels/NotifHistPanel.qml": {
@@ -584,7 +584,7 @@
     "mode": "0o644"
   },
   "payload/shell/qmldir": {
-    "sha256": "7f4499724423f8a4fcd3e507dc7debe6ec22c44b63877c0c8c67ad90ca87fbbb",
+    "sha256": "11b71be9cf149ec6499055b8b11d7a8ecd1a65bfedd4d007d64fb1bb584d588e",
     "mode": "0o644"
   },
   "payload/shell/settings/BluetoothPage.qml": {
@@ -640,7 +640,7 @@
     "mode": "0o755"
   },
   "payload/shell/visualizer/cava.conf": {
-    "sha256": "97cf463a21eedddc483ead1d9f4466f03878299a1b79cba0c17b45cdad369b51",
+    "sha256": "6cb9d2cddfb1007085579698b2c31d56833d26742d1cd059fab52d22f39d44e5",
     "mode": "0o644"
   },
   "payload/shell/volume/get_audio_state.py": {
@@ -725,6 +725,10 @@
   },
   "src/warp/warp.cpp": {
     "sha256": "61b22e4181a7f4cd76e193756f3959d649cdf8b84320a4afab7a8774884a1ed6",
+    "mode": "0o644"
+  },
+  "payload/shell/SpectrumEngine.qml": {
+    "sha256": "3d4ab1eb91b9086e255f70f7cae6b1b4dcdfd57794dc75cb473f770d988bfaee",
     "mode": "0o644"
   }
 }
