@@ -107,7 +107,8 @@ PanelWindow {
             { t: "toggle", label: "Show audio spectrum behind the island music player (requires cava)", key: "mediaSpectrum" } ] },
         { id: "motion", name: "Motion", icon: "󰑓", desc: "Interface motion and transition speed.", rows: [
             { t: "toggle", label: "Reduce interface motion", key: "reducedMotion" },
-            { t: "slider", label: "Animation duration", key: "animScale", min: 0.4, max: 2.0, step: 0.05, unit: "×" } ] },
+            { t: "slider", label: "Animation duration", key: "animScale", min: 0.4, max: 2.0, step: 0.05, unit: "×" },
+            { t: "toggle", label: "Experimental: button hover lift", key: "experimentalHoverLift" } ] },
         { id: "launcher", name: "Launcher", icon: "󰍉", desc: "The Spotlight-style app launcher.", rows: [
             { t: "slider", label: "Maximum results", key: "launcherResults", min: 3, max: 10, step: 1, unit: "" } ] },
         { id: "notifications", name: "Notifications", icon: "󰂚", desc: "Popups in the island.", rows: [
