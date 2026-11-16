@@ -11,6 +11,7 @@ PanelWindow {
     readonly property bool open: island.vpnOpen
     property var connections: []
     property string error: ""
+    property string listError: ""
     property bool busy: false
     readonly property string helper: Quickshell.env("HOME") + "/.local/bin/aether-vpn"
     function refresh() { if (!busy && !reader.running) reader.running = true }
@@ -25,7 +26,7 @@ PanelWindow {
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+    WlrLayershell.keyboardFocus: open && !busy ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     onOpenChanged: if (open) { refresh(); Qt.callLater(() => keys.forceActiveFocus()); }
     Timer { interval: 6000; repeat: true; running: vpn.open && !vpn.busy; onTriggered: vpn.refresh() }
     Process {
@@ -35,9 +36,9 @@ PanelWindow {
             onStreamFinished: {
                 try {
                     const d = JSON.parse(this.text);
-                    if (d.ok) { vpn.connections = d.connections || []; vpn.error = ""; }
-                    else vpn.error = d.error || "Could not list VPNs";
-                } catch (e) { vpn.error = "NetworkManager is unavailable"; }
+                    if (d.ok) { vpn.connections = d.connections || []; vpn.listError = ""; }
+                    else vpn.listError = d.error || "Could not list VPNs";
+                } catch (e) { vpn.listError = "NetworkManager is unavailable"; }
             }
         }
     }
@@ -100,7 +101,7 @@ PanelWindow {
                 }
             }
             Text { visible: vpn.connections.length === 0 && !reader.running; Layout.fillWidth: true; text: "No saved VPN connections. Create one in NetworkManager first."; color: vpn.island.mocha.subtext0; font.family: "Inter"; font.pixelSize: 13; wrapMode: Text.WordWrap }
-            Text { visible: vpn.error.length > 0; text: vpn.error; color: vpn.island.mocha.red; font.family: "Inter"; wrapMode: Text.WordWrap; Layout.fillWidth: true }
+            Text { visible: vpn.error.length > 0 || vpn.listError.length > 0; text: vpn.error || vpn.listError; color: vpn.island.mocha.red; font.family: "Inter"; wrapMode: Text.WordWrap; Layout.fillWidth: true }
         }
     }
     Item { id: keys; focus: open; Keys.onEscapePressed: vpn.island.vpnOpen = false }
