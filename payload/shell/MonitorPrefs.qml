@@ -10,7 +10,7 @@ QtObject {
     property real panelScale: 1.1
 
     // Uses XDG config; changes can be made without editing the compositor config.
-    readonly property string filePath: Quickshell.env("HOME") + "/.config/aether/monitors/" + monitorName + ".json"
+    readonly property string filePath: (Quickshell.env("XDG_CONFIG_HOME") || (Quickshell.env("HOME") + "/.config")) + "/aether/monitors/" + monitorName + ".json"
     function refresh() { data.reload() }
 
     property FileView data: FileView {
