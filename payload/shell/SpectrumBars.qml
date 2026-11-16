@@ -6,24 +6,22 @@ Item {
     id: spectrum
     property bool active: false
     property color accent: "#64b69c"
-    property var levels: []
+    readonly property var levels: SpectrumEngine.levels
     readonly property int count: 24
     property real gap: 3
-    property bool available: false
+    readonly property bool available: SpectrumEngine.available
+    readonly property bool wantsFrames: active && !Prefs.p.reducedMotion
+    property bool registered: false
 
-    Process {
-        id: cava
-        running: spectrum.active && !Prefs.p.reducedMotion
-        command: ["cava", "-p", Quickshell.env("HOME") + "/.config/hypr/scripts/quickshell/visualizer/cava.conf"]
-        stdout: SplitParser {
-            onRead: line => {
-                const values = line.trim().split(";").map(s => Number(s));
-                if (values.length < 20 || values.some(v => !Number.isFinite(v))) return;
-                spectrum.levels = values.slice(0, spectrum.count).map(v => Math.max(0, Math.min(1, v / 100)));
-                spectrum.available = true;
-            }
-        }
-        onExited: { spectrum.available = false; spectrum.levels = []; }
+    function updateSubscription() {
+        if (registered === wantsFrames) return;
+        SpectrumEngine.subscribers = Math.max(0, SpectrumEngine.subscribers + (wantsFrames ? 1 : -1));
+        registered = wantsFrames;
+    }
+    onWantsFramesChanged: updateSubscription()
+    Component.onCompleted: updateSubscription()
+    Component.onDestruction: {
+        if (registered) SpectrumEngine.subscribers = Math.max(0, SpectrumEngine.subscribers - 1);
     }
 
     Row {
