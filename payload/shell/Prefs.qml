@@ -15,7 +15,7 @@ Singleton {
         barHeight: 39, collapsedWidth: 150, topGap: 18, expandedRadius: 31,
         statusCircle: true, albumArt: true, btBattery: true,
         clock24h: true, clockSeconds: false, dateFormat: "ddd, MMM d",
-        reducedMotion: false,
+        reducedMotion: false, experimentalHoverLift: false,
         animScale: 1.0, launcherResults: 6, notifSeconds: 4.5,
         overviewZoom: 0.30,
         batterySaverAuto: true, batterySaverRefresh: false, autoRefresh: false, sideMeters: true, sideWorkspaces: true,
@@ -50,6 +50,7 @@ Singleton {
             property string dateFormat: "ddd, MMM d"
             
             property bool reducedMotion: false
+            property bool experimentalHoverLift: false
             property real animScale: 1.0
             
             property int launcherResults: 6
