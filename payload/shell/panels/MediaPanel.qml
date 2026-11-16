@@ -12,6 +12,17 @@ Item {
     readonly property var md: island.musicData
     readonly property bool playing: md.status === "Playing"
     readonly property real pct: Math.max(0, Math.min(1, Number(md.percent || 0) / 100))
+    readonly property string trackSignature: (md.playerName || "") + ":" + (md.title || "") + ":" + (md.artist || "")
+    property real seekOverride: -1
+    readonly property real shownPct: seekOverride >= 0 ? seekOverride : pct
+    onTrackSignatureChanged: { seekFallback.stop(); seekOverride = -1; }
+    onPctChanged: {
+        if (seekOverride >= 0 && Math.abs(pct - seekOverride) < 0.035) {
+            seekFallback.stop();
+            seekOverride = -1;
+        }
+    }
+    Timer { id: seekFallback; interval: 1600; onTriggered: media.seekOverride = -1 }
     readonly property string ctl: "~/.config/hypr/scripts/quickshell/music/player_control.sh"
 
     anchors.fill: parent
@@ -25,8 +36,11 @@ Item {
     }
     function seekTo(frac) {
         const total = Number(md.length || 0);
-        if (total > 0)
+        if (total > 0) {
+            seekOverride = Math.max(0, Math.min(1, frac));
+            seekFallback.restart();
             Quickshell.execDetached(["bash", ctl, "seek", String(Math.round(frac * 100)), String(total), md.playerName || ""]);
+        }
     }
 
     
@@ -124,9 +138,9 @@ Item {
                         color: Qt.rgba(1, 1, 1, 0.22)
                         Rectangle {
                             height: parent.height; radius: height / 2
-                            width: parent.width * (seekArea.pressed ? seekArea.frac : media.pct)
+                            width: parent.width * (seekArea.pressed ? seekArea.frac : media.shownPct)
                             color: island.accent
-                            Behavior on width { enabled: !seekArea.pressed; NumberAnimation { duration: Prefs.duration(900); easing.type: Easing.Linear } }
+                            Behavior on width { enabled: !seekArea.pressed && media.seekOverride < 0; NumberAnimation { duration: Prefs.duration(180); easing.type: Easing.OutCubic } }
                         }
                     }
                     MouseArea {

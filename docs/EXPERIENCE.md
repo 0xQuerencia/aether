@@ -56,3 +56,17 @@ python3 tests/nested-smoke.py   # requires an owned nested Hyprland environment
 ```
 
 The static CI and unit tests do not validate native desktop presentation. Test monitor hotplug, CAVA responsiveness, MPRIS synchronization, and VPN connections on actual hardware before treating these additions as production-ready.
+
+## Motion and responsiveness
+
+Aether keeps the existing interrupted/reversible island morphs and scales motion from Settings > Motion. Opening the dashboard, lyrics or VPN now uses small opacity-and-scale entrances; reduced motion makes their animation durations zero.
+
+Media seeking is optimistic: the progress indicator moves immediately and reconciles with the player position, avoiding a long reverse animation.
+
+All CAVA-powered widgets subscribe to one shared, on-demand audio sampler instead of starting separate processes per widget/monitor. The sampler caps each frame to 24 bars, publishes up to 48 frames per second, stops when the last widget closes, and backs off for five seconds if the process exits unexpectedly. Actual rendered FPS depends on Qt, compositor and hardware. Disable the visualizers for a battery/CPU comparison.
+
+The optional **Experimental: button hover lift** control (Settings > Motion) adds a very small hover scale effect. It is off by default and disabled by Reduce interface motion.
+
+### Validate on hardware
+
+For a meaningful smoothness comparison, try the same panel/seek/visualizer actions before and after this update. Check for jank, keyboard-focus loss, monitor hotplug behavior and battery impact. A successful source/unit-test run does **not** measure Wayland frame latency.

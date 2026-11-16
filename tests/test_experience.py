@@ -72,6 +72,25 @@ class ExperienceTests(unittest.TestCase):
         self.assertEqual(records[0]["exec"], "lyrics")
         self.assertTrue(all(r["kind"] in ("island", "scheme", "theme") for r in launcher.query("@")))
 
+    def test_spectrum_uses_one_lazily_started_backend(self):
+        shell = ROOT / "payload/shell"
+        spectrum = (shell / "SpectrumBars.qml").read_text(encoding="utf-8")
+        engine = (shell / "SpectrumEngine.qml").read_text(encoding="utf-8")
+        qmldir = (shell / "qmldir").read_text(encoding="utf-8")
+        self.assertNotIn("Process {", spectrum)
+        self.assertIn("SpectrumEngine.subscribers", spectrum)
+        self.assertIn("Process {", engine)
+        self.assertIn("subscribers > 0", engine)
+        self.assertIn("singleton SpectrumEngine 1.0 SpectrumEngine.qml", qmldir)
+
+    def test_experimental_hover_lift_defaults_off(self):
+        shell = ROOT / "payload/shell"
+        prefs = (shell / "Prefs.qml").read_text(encoding="utf-8")
+        self.assertIn("experimentalHoverLift: false", prefs)
+        button = (shell / "AetherButton.qml").read_text(encoding="utf-8")
+        self.assertIn("Prefs.p.reducedMotion", button)
+        self.assertIn("Prefs.p.experimentalHoverLift", button)
+
     def test_optional_python_helpers_compile(self):
         paths = ["payload/bin/aether-lyrics", "payload/bin/aether-monitor", "payload/bin/aether-vpn",
                  "payload/shell/applauncher/launcher_query.py", "payload/scripts/aether-theme.py"]

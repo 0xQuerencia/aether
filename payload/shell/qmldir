@@ -57,6 +57,7 @@ IslandAppTail 1.0 IslandAppTail.qml
 
 singleton Displays 1.0 Displays.qml
 
+singleton SpectrumEngine 1.0 SpectrumEngine.qml
 SpectrumBars 1.0 SpectrumBars.qml
 LyricsWindow 1.0 LyricsWindow.qml
 DashboardWindow 1.0 DashboardWindow.qml

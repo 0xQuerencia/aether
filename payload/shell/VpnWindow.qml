@@ -58,6 +58,10 @@ PanelWindow {
         height: Math.min(parent.height - 80, 620)
         anchors.centerIn: parent
         radius: 24
+        opacity: vpn.open ? 1 : 0
+        scale: vpn.open ? 1 : 0.975
+        Behavior on opacity { NumberAnimation { duration: Prefs.duration(160); easing.type: Easing.OutCubic } }
+        Behavior on scale { NumberAnimation { duration: Prefs.duration(220); easing.type: Easing.OutCubic } }
         color: vpn.island.mocha.base
         border.width: 1; border.color: vpn.island.mocha.surface1
         ColumnLayout {
