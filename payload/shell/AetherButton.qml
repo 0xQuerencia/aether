@@ -7,7 +7,7 @@ Button {
     property bool primary:false
     implicitHeight:AetherStyle.controlHeight*uiScale
     implicitWidth:Math.max(72*uiScale,contentItem.implicitWidth+24*uiScale)
-    scale:down && !Prefs.p.reducedMotion?AetherStyle.pressScale:1
+    scale: !enabled || Prefs.p.reducedMotion ? 1 : (down ? AetherStyle.pressScale : (Prefs.p.experimentalHoverLift && hovered ? 1.025 : 1))
     Behavior on scale{NumberAnimation{duration:Prefs.duration(AetherStyle.motionPress);easing.type:Easing.OutCubic}}
     Keys.onReturnPressed:clicked()
     Keys.onEnterPressed:clicked()
