@@ -56,3 +56,10 @@ MinimizedDock 1.0 MinimizedDock.qml
 IslandAppTail 1.0 IslandAppTail.qml
 
 singleton Displays 1.0 Displays.qml
+
+SpectrumBars 1.0 SpectrumBars.qml
+LyricsWindow 1.0 LyricsWindow.qml
+DashboardWindow 1.0 DashboardWindow.qml
+VpnWindow 1.0 VpnWindow.qml
+MonitorPrefs 1.0 MonitorPrefs.qml
+DesktopWidgets 1.0 DesktopWidgets.qml

@@ -103,8 +103,9 @@ def _fans(sys_root: Path) -> list[dict[str, Any]]:
 
 
 def _battery(sys_root: Path) -> dict[str, Any] | None:
-    root = sys_root / "class/power_supply/BAT1"
-    if not root.exists():
+    batteries = sorted((sys_root / "class/power_supply").glob("BAT*"))
+    root = next((candidate for candidate in batteries if candidate.is_dir()), None)
+    if root is None:
         return None
 
     def number(name: str) -> float | None:

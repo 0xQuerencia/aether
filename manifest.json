@@ -23,6 +23,14 @@
     "sha256": "c74a2cde2823ef44415c2cedbe66a52c350214b1678fae7d57f93ca1b68b8226",
     "mode": "0o755"
   },
+  "payload/bin/aether-lyrics": {
+    "sha256": "d4339e2a68bbd3206b3500051c4f2931f0b6167ba04d9f9572512e5034debdd6",
+    "mode": "0o644"
+  },
+  "payload/bin/aether-monitor": {
+    "sha256": "6c7527e9f2adf1eb2434970ecaf8096541ef1b06cbeaf40957cac7bd1c7fa9da",
+    "mode": "0o644"
+  },
   "payload/bin/aether-pin": {
     "sha256": "dca6002d63aeff8fe4d21bbd1bc1895d64b57f460409a76389a27e3fd98804b2",
     "mode": "0o755"
@@ -47,6 +55,10 @@
     "sha256": "ba0f6c081fddfd166340ee96da29df2fe09f6ffe2630426d4f2c4732498adf6a",
     "mode": "0o755"
   },
+  "payload/bin/aether-vpn": {
+    "sha256": "e0c4eca8adc099be2fede441fa6d298bb5fcf941d472a2b15f4d59bfcf4d9ddf",
+    "mode": "0o644"
+  },
   "payload/bin/aether-warp": {
     "sha256": "6d1dab1f6717b635efb361894984f76ca61f9fc51de1d32e14b970b1afd4ca67",
     "mode": "0o755"
@@ -56,7 +68,7 @@
     "mode": "0o644"
   },
   "payload/config/aether/integration.lua": {
-    "sha256": "24d516f3f1b85786bf529a58d827293acdc6b1a51226af041197c70c78dc956f",
+    "sha256": "dc15417347dafafd3cb2dc78f23daf6909e6e1294f43b3e98135756f1187b00a",
     "mode": "0o644"
   },
   "payload/config/aether/matugen/colors.json.template": {
@@ -84,7 +96,7 @@
     "mode": "0o755"
   },
   "payload/scripts/aether-theme.py": {
-    "sha256": "1a8ad70920e46f423b82646a07f13dec6e47a6b822e207ae125c16392c2fcb54",
+    "sha256": "b6cdb6a6ff0660317672d3727a9e67e1aef8d2c77c0e8ec54b723fd545e70bff",
     "mode": "0o755"
   },
   "payload/scripts/caching.sh": {
@@ -187,6 +199,14 @@
     "sha256": "081e180d25f3c34255b0982d7f98217667aa2b6c2d291f4c04e57de52cf82284",
     "mode": "0o644"
   },
+  "payload/shell/DashboardWindow.qml": {
+    "sha256": "2023d2611d6bbfb8db195df929d7bdd710aa0274aedd5f95adaeb9df4bb58d64",
+    "mode": "0o644"
+  },
+  "payload/shell/DesktopWidgets.qml": {
+    "sha256": "09e57f1ec662ea8c55a692d726a5d1a61d7f22137846f9a67cd1500a178d9d86",
+    "mode": "0o644"
+  },
   "payload/shell/Displays.qml": {
     "sha256": "6743bea9f45b22c389446f1bc4928cecd4d199d7d097e9b208ded22c7263ec2d",
     "mode": "0o644"
@@ -204,7 +224,7 @@
     "mode": "0o644"
   },
   "payload/shell/Island.qml": {
-    "sha256": "7bcdd19c91633d02c487cec8e3847d952c67ec0bec461afe97c1d798340e3a55",
+    "sha256": "6ffefc190de4d161d2e09d6e2f9fab4dfaf2056337f0fb488c78d470d8452c02",
     "mode": "0o644"
   },
   "payload/shell/IslandAppTail.qml": {
@@ -231,6 +251,10 @@
     "sha256": "7c5fbb89e25c2dd61646c53fa94d8be6e141aaecabcd87b545517fb9135e5064",
     "mode": "0o644"
   },
+  "payload/shell/LyricsWindow.qml": {
+    "sha256": "8718186a5adb38650d16c6238c341d82f59c21ce85a2659202d449887cac966f",
+    "mode": "0o644"
+  },
   "payload/shell/MatugenColors.qml": {
     "sha256": "1c1448d68607484748d1fabd36f9b4211f22e72a59983d22e2069709ac213e66",
     "mode": "0o644"
@@ -239,12 +263,16 @@
     "sha256": "d6b284caf1e9bc62cf6e9348a7649826a9808714f0e93bbdc80251b9c53c0734",
     "mode": "0o644"
   },
+  "payload/shell/MonitorPrefs.qml": {
+    "sha256": "f2aca1cce7f1e4297d945cdc1f2dd34749d4e26fab290feca320595440ca5bbd",
+    "mode": "0o644"
+  },
   "payload/shell/Notifs.qml": {
     "sha256": "8fb64a96abd0269200497541d9f157c000ae9bec21b40792c5c38da5528de1c5",
     "mode": "0o644"
   },
   "payload/shell/OriginalIsland.qml": {
-    "sha256": "9aed79fadc9b152f0481a2b6d428076873a2f3082cc0c6450f4e90d2a983db6c",
+    "sha256": "b680d7a232a6ad150345f80798339fa38ff3b96fc17a98bc1e4789f65557c945",
     "mode": "0o644"
   },
   "payload/shell/PalettePicker.qml": {
@@ -268,7 +296,7 @@
     "mode": "0o644"
   },
   "payload/shell/Prefs.qml": {
-    "sha256": "aa553b7a0bc4592143c28f62c14ff8b3bcfd0675c79e83155da9dc4316ddd388",
+    "sha256": "2697105b18b2f6e0574c2872450a3fec3d95cd0360074496f432c760f99ad72a",
     "mode": "0o644"
   },
   "payload/shell/PressScale.qml": {
@@ -288,11 +316,15 @@
     "mode": "0o644"
   },
   "payload/shell/SettingsWindow.qml": {
-    "sha256": "ad8e4b039a7c41354c7b2b21f24a4af4a5a29b1debd3036191f6cea32d8f9151",
+    "sha256": "8a6bd12f864a49eb496fea57c4250a945e9a088b7d9db9d1873f109d653b779e",
     "mode": "0o644"
   },
   "payload/shell/Shell.qml": {
-    "sha256": "ff9e4721bec0261e7e415db5e6f175ca39b5002770a43af1ae216648f6e2a868",
+    "sha256": "59c9b960f6391b88e7670e1a050003449cd47cf8675f5df3187367aaac611d6f",
+    "mode": "0o644"
+  },
+  "payload/shell/SpectrumBars.qml": {
+    "sha256": "f439949e86fc737c61f75ebd67f26727bf08f670a1759a2e8b5a002b79c42752",
     "mode": "0o644"
   },
   "payload/shell/SysData.qml": {
@@ -305,6 +337,10 @@
   },
   "payload/shell/Tasks.qml": {
     "sha256": "52633552b700d27720e3187bfe3294f406200fa6d12c9b61b8b0731f06add4ec",
+    "mode": "0o644"
+  },
+  "payload/shell/VpnWindow.qml": {
+    "sha256": "113bcce81d460b4d0e4995ead538fd5f98872c949a7994c15bf2bd6ff538d35b",
     "mode": "0o644"
   },
   "payload/shell/WindowRegistry.js": {
@@ -324,7 +360,7 @@
     "mode": "0o644"
   },
   "payload/shell/applauncher/launcher_query.py": {
-    "sha256": "fe80e4c518e4c6fad0f12d3a8463914f70344d0f2d511d8005fc817cfb035f71",
+    "sha256": "47c5be988f02909b4b59d1d080fcf6c7674e8851cf26ae397050d7b38f4bae58",
     "mode": "0o644"
   },
   "payload/shell/assets/headphones/SOURCES.md": {
@@ -456,11 +492,11 @@
     "mode": "0o644"
   },
   "payload/shell/panels/LauncherPanel.qml": {
-    "sha256": "da7ea960969bdd5eea5f5f63f3374b89ee2ffe29355689a1f295ed5b719bc6bb",
+    "sha256": "84dcf1dff1f08474f9712e2cbb1712239f25b69ccf30de2289a74b51d36f47e2",
     "mode": "0o644"
   },
   "payload/shell/panels/MediaPanel.qml": {
-    "sha256": "8b1fdec371744cb41e3b7158baddd82e9b125d6682d9dd4050683acd82699895",
+    "sha256": "67dd3ba510cd32500ea28cec775c12ab0a37c24773c3d5615e78d6066702da60",
     "mode": "0o644"
   },
   "payload/shell/panels/NotifHistPanel.qml": {
@@ -548,7 +584,7 @@
     "mode": "0o644"
   },
   "payload/shell/qmldir": {
-    "sha256": "ad5054d4745987e5e762511004956d7dc0f9c6fbdd34ec30db6e9871e57236e7",
+    "sha256": "7f4499724423f8a4fcd3e507dc7debe6ec22c44b63877c0c8c67ad90ca87fbbb",
     "mode": "0o644"
   },
   "payload/shell/settings/BluetoothPage.qml": {
@@ -600,8 +636,12 @@
     "mode": "0o644"
   },
   "payload/shell/taskmgr/sysmon.py": {
-    "sha256": "0a2aa99c7199b94667d0b49395618cc93abaaae38c530fb285aadbdaf476896a",
+    "sha256": "9ab4524a18dc06497506dbdaaeff48a127f6c30db036cbe400c7f46838b444dd",
     "mode": "0o755"
+  },
+  "payload/shell/visualizer/cava.conf": {
+    "sha256": "97cf463a21eedddc483ead1d9f4466f03878299a1b79cba0c17b45cdad369b51",
+    "mode": "0o644"
   },
   "payload/shell/volume/get_audio_state.py": {
     "sha256": "829af797a920e1205cb240dc652ef9a1c15e8bde70e6881e3edd95258e0789a9",

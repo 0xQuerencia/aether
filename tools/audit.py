@@ -24,7 +24,14 @@ def audit(check_manifest=True):
    if re.search(pattern,raw):problems.append(str(rel)+': '+name)
  if check_manifest:
   try:
-   if json.loads((ROOT/'manifest.json').read_text())!=manifest():problems.append('manifest.json: source hashes or file set differ')
+   expected=json.loads((ROOT/'manifest.json').read_text())
+   actual=manifest()
+   if expected!=actual:
+    absent=sorted(set(actual)-set(expected))
+    obsolete=sorted(set(expected)-set(actual))
+    modified=sorted(k for k in set(expected)&set(actual) if expected[k]!=actual[k])
+    report=[*('missing '+k for k in absent),*('obsolete '+k for k in obsolete),*('mismatched '+k for k in modified)]
+    problems.append('manifest.json: source hashes or file set differ: '+', '.join(report[:12]))
   except (OSError,ValueError):problems.append('manifest.json: missing or invalid')
  return problems
 if __name__=='__main__':
