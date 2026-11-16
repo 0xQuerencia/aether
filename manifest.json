@@ -24,11 +24,11 @@
     "mode": "0o755"
   },
   "payload/bin/aether-lyrics": {
-    "sha256": "a3a509c32fdd8bb9b8a0176580e32346a35f8ca6eeafbe07aa4f1e2d0c703f92",
+    "sha256": "d4339e2a68bbd3206b3500051c4f2931f0b6167ba04d9f9572512e5034debdd6",
     "mode": "0o644"
   },
   "payload/bin/aether-monitor": {
-    "sha256": "a2a9b8c5d6ecff5740dc3434d850d95c39c9b5a78d8228c264879016696ccdb1",
+    "sha256": "6c7527e9f2adf1eb2434970ecaf8096541ef1b06cbeaf40957cac7bd1c7fa9da",
     "mode": "0o644"
   },
   "payload/bin/aether-pin": {
@@ -56,7 +56,7 @@
     "mode": "0o755"
   },
   "payload/bin/aether-vpn": {
-    "sha256": "4620f7aa49a277d9cbe79f66f79df506f020f04dfd959cb92bb0ee8d7de40d89",
+    "sha256": "e0c4eca8adc099be2fede441fa6d298bb5fcf941d472a2b15f4d59bfcf4d9ddf",
     "mode": "0o644"
   },
   "payload/bin/aether-warp": {
@@ -96,7 +96,7 @@
     "mode": "0o755"
   },
   "payload/scripts/aether-theme.py": {
-    "sha256": "2bc6b9bc69cb4994afd26a4052613eab629922df4975f58c9babad7e342cdd54",
+    "sha256": "b6cdb6a6ff0660317672d3727a9e67e1aef8d2c77c0e8ec54b723fd545e70bff",
     "mode": "0o755"
   },
   "payload/scripts/caching.sh": {
@@ -200,7 +200,7 @@
     "mode": "0o644"
   },
   "payload/shell/DashboardWindow.qml": {
-    "sha256": "9ad790b274d396bb2df24c9c151229d7722b3edf4557d1ff7b1936399b3652bc",
+    "sha256": "2023d2611d6bbfb8db195df929d7bdd710aa0274aedd5f95adaeb9df4bb58d64",
     "mode": "0o644"
   },
   "payload/shell/DesktopWidgets.qml": {
@@ -224,7 +224,7 @@
     "mode": "0o644"
   },
   "payload/shell/Island.qml": {
-    "sha256": "345748ccfee394c6837cb780377568653cb7273497b97fb4e77e07f808352d25",
+    "sha256": "6ffefc190de4d161d2e09d6e2f9fab4dfaf2056337f0fb488c78d470d8452c02",
     "mode": "0o644"
   },
   "payload/shell/IslandAppTail.qml": {
@@ -252,7 +252,7 @@
     "mode": "0o644"
   },
   "payload/shell/LyricsWindow.qml": {
-    "sha256": "d08851d5e0701e2716803d9b72453b0c7e77eeb5677693aeb5b26724af4b5b5b",
+    "sha256": "8718186a5adb38650d16c6238c341d82f59c21ce85a2659202d449887cac966f",
     "mode": "0o644"
   },
   "payload/shell/MatugenColors.qml": {
@@ -264,7 +264,7 @@
     "mode": "0o644"
   },
   "payload/shell/MonitorPrefs.qml": {
-    "sha256": "8314fa66502909a0f1729ad52ddc8147a7941d6a2fe237e081cfd63af93737bc",
+    "sha256": "f2aca1cce7f1e4297d945cdc1f2dd34749d4e26fab290feca320595440ca5bbd",
     "mode": "0o644"
   },
   "payload/shell/Notifs.qml": {
@@ -272,7 +272,7 @@
     "mode": "0o644"
   },
   "payload/shell/OriginalIsland.qml": {
-    "sha256": "9688450b60509e68ec2ab70a7cdfeef865194cd17b21de6052c6c364d2db9c24",
+    "sha256": "b680d7a232a6ad150345f80798339fa38ff3b96fc17a98bc1e4789f65557c945",
     "mode": "0o644"
   },
   "payload/shell/PalettePicker.qml": {
@@ -324,7 +324,7 @@
     "mode": "0o644"
   },
   "payload/shell/SpectrumBars.qml": {
-    "sha256": "d1dfce8b8a179f1e4b664f89c71c4a524f9ed315a68fab1bca4c4a4ca887c671",
+    "sha256": "f439949e86fc737c61f75ebd67f26727bf08f670a1759a2e8b5a002b79c42752",
     "mode": "0o644"
   },
   "payload/shell/SysData.qml": {
@@ -340,7 +340,7 @@
     "mode": "0o644"
   },
   "payload/shell/VpnWindow.qml": {
-    "sha256": "7eec40679471eecde7d95890bc5a93ca8487bc864a6ef0f713bd13f649ac3284",
+    "sha256": "113bcce81d460b4d0e4995ead538fd5f98872c949a7994c15bf2bd6ff538d35b",
     "mode": "0o644"
   },
   "payload/shell/WindowRegistry.js": {
@@ -360,7 +360,7 @@
     "mode": "0o644"
   },
   "payload/shell/applauncher/launcher_query.py": {
-    "sha256": "46157ed7132da7c5dd86f63feb975108c4286af7d1596cdf0c0a9afb1873053f",
+    "sha256": "47c5be988f02909b4b59d1d080fcf6c7674e8851cf26ae397050d7b38f4bae58",
     "mode": "0o644"
   },
   "payload/shell/assets/headphones/SOURCES.md": {
@@ -636,7 +636,7 @@
     "mode": "0o644"
   },
   "payload/shell/taskmgr/sysmon.py": {
-    "sha256": "0a2aa99c7199b94667d0b49395618cc93abaaae38c530fb285aadbdaf476896a",
+    "sha256": "9ab4524a18dc06497506dbdaaeff48a127f6c30db036cbe400c7f46838b444dd",
     "mode": "0o755"
   },
   "payload/shell/visualizer/cava.conf": {
