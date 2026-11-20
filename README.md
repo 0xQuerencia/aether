@@ -10,7 +10,7 @@ A few private details are covered in the video. It shows my desktop; the install
 
 ## What's in here
 
-The island handles the launcher, control center, notifications, media and timers. You can drop a file onto it for image/video actions, zip a folder, or send something to a nearby receiver. Longer jobs run as tasks and leave a result when they're done.
+The island handles the launcher, control center, notifications, media and timers. The timer clock also offers named 25-minute focus, 5-minute break, and 15-minute long-break presets. Sessions use the existing persistent timer service; switching between focus and breaks is manual. You can drop a file onto it for image/video actions, zip a folder, or send something to a nearby receiver. Longer jobs run as tasks and leave a result when they're done.
 
 There's also an overview, clipboard history, emoji picker, notes, screen pins, recording controls and wallpaper palettes. Most of it is reachable from the control center.
 
