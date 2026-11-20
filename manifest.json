@@ -236,7 +236,7 @@
     "mode": "0o644"
   },
   "payload/shell/LiveActivities.qml": {
-    "sha256": "b9887c74a3d85f551c86cd375a73395b501c17cc700fb25ee7a720d3668411a9",
+    "sha256": "d000f5be5377365e49d6e43b6fc250270496844aaa3d88bef2c149eef86b09da",
     "mode": "0o644"
   },
   "payload/shell/Lock.qml": {

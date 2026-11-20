@@ -15,6 +15,7 @@ Singleton {
     signal attention(var event)
     signal commandFinished(bool succeeded)
     readonly property var timers:state.timers || []
+    readonly property bool countingTimer:timers.some(timer=>timer.status==="running")
     readonly property var power:state.power || null
     readonly property var activeTimers:timers.filter(t=>t.status!=="done").sort((a,b)=>(a.status==="paused")-(b.status==="paused") || remaining(a)-remaining(b))
     readonly property var finishedTimers:timers.filter(t=>t.status==="done").sort((a,b)=>(b.finished || 0)-(a.finished || 0))
@@ -35,7 +36,7 @@ Singleton {
             root.lastEvent=event.id || "";root.initialized=true;
         }catch(e){root.error="Activity state could not be read. Try again in a moment.";}}
     }
-    Timer{interval:500;repeat:true;running:true;onTriggered:root.now=Date.now()/1000}
+    Timer{interval:root.countingTimer?500:1000;repeat:true;running:true;onTriggered:root.now=Date.now()/1000}
     Process {
         id:operation
         stdout:StdioCollector{onStreamFinished:{try{const result=JSON.parse(text);if(result.added)root.selectedTimerId=result.id;}catch(e){}}}
