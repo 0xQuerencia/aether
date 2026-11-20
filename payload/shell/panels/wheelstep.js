@@ -86,7 +86,8 @@ function advance(state, delta, mode, now, threshold, idleMs, cooldownMs, noiseFl
 
     next.direction = direction;
     next.mode = mode;
-    next.accumulator += delta;
+    // Limit backlog so one touchpad impulse cannot queue a long workspace cascade.
+    next.accumulator = Math.max(-threshold * 2, Math.min(threshold * 2, next.accumulator + delta));
     next.lastInputAt = now;
 
     return { state: next, step: takeStep(next, now, threshold, cooldownMs) };
