@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 
 ColumnLayout {
+    id: launcherContent
     required property var island
     width:island.launchW-island.s(0)
     height:island.launchH-island.s(0)
@@ -21,6 +22,14 @@ ColumnLayout {
     readonly property color mutedIconColor: island.mocha.subtext0
     readonly property color subtitleColor:  island.mocha.overlay0
 
+
+    function moveSelection(delta) {
+        const count = island.appResults.count;
+        if (count < 1) return;
+        const index = ((island.launchSelectedIndex + delta) % count + count) % count;
+        island.launchSelectedIndex = index;
+        appListView.positionViewAtIndex(index, ListView.Contain);
+    }
 
     spacing: 0
     visible: opacity > 0
@@ -58,16 +67,18 @@ ColumnLayout {
             Keys.onEscapePressed: island.closeLauncher()
             Keys.onReturnPressed: island.launchSelected()
             Keys.onEnterPressed:  island.launchSelected()
-            Keys.onUpPressed: {
-                if (island.launchSelectedIndex > 0) {
-                    island.launchSelectedIndex--;
-                    appListView.positionViewAtIndex(island.launchSelectedIndex, ListView.Contain);
-                }
-            }
-            Keys.onDownPressed: {
-                if (island.launchSelectedIndex < appResults.count - 1) {
-                    island.launchSelectedIndex++;
-                    appListView.positionViewAtIndex(island.launchSelectedIndex, ListView.Contain);
+            Keys.onUpPressed: launcherContent.moveSelection(-1)
+            Keys.onDownPressed: launcherContent.moveSelection(1)
+            Keys.onPressed: event => {
+                if ((event.modifiers & Qt.ControlModifier) && event.key === Qt.Key_K) {
+                    searchInput.clear();
+                    event.accepted = true;
+                } else if (event.key === Qt.Key_PageDown) {
+                    launcherContent.moveSelection(5);
+                    event.accepted = true;
+                } else if (event.key === Qt.Key_PageUp) {
+                    launcherContent.moveSelection(-5);
+                    event.accepted = true;
                 }
             }
             

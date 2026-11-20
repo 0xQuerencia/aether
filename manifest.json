@@ -492,7 +492,7 @@
     "mode": "0o644"
   },
   "payload/shell/panels/LauncherPanel.qml": {
-    "sha256": "84dcf1dff1f08474f9712e2cbb1712239f25b69ccf30de2289a74b51d36f47e2",
+    "sha256": "47b9c735292dba80cbc45041ca132f2aff7bc30e507fda81a311d37d0ec7c426",
     "mode": "0o644"
   },
   "payload/shell/panels/MediaPanel.qml": {
