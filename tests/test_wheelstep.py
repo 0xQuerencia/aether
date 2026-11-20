@@ -15,7 +15,7 @@ class WheelStepTests(unittest.TestCase):
 const fs = require('fs');
 const vm = require('vm');
 const assert = require('assert');
-const code = fs.readFileSync(process.argv[1], 'utf8').replace(/^\\s*\\.pragma library\\s*/, '');
+const code = fs.readFileSync(process.argv[1], 'utf8').replace(/^\s*\.pragma library\s*/, '');
 const wheel = {};
 vm.runInNewContext(code, wheel);
 
