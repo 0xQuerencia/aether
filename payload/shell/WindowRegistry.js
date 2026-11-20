@@ -6,10 +6,15 @@ function getScale(mw, mh, userScale) {
         mh = mw * (1080.0 / 1920.0);
     }
 
-    if (mw <= 0 || mh <= 0) return 1.0;
-    
-    let rw = mw / 1920.0;
-    let rh = mh / 1080.0;
+    const width = Number(mw), height = Number(mh);
+    if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0)
+        return 1.0;
+
+    const requested = Number(userScale);
+    const safeScale = userScale == null || !Number.isFinite(requested)
+        ? 1.0 : Math.max(0.8, Math.min(1.4, requested));
+    let rw = width / 1920.0;
+    let rh = height / 1080.0;
     let r = Math.min(rw, rh);
     
     let baseScale = 1.0;
@@ -20,7 +25,7 @@ function getScale(mw, mh, userScale) {
         baseScale = Math.pow(r, 0.5);
     }
     
-    return baseScale * (userScale !== undefined ? userScale : 1.0);
+    return baseScale * safeScale;
 }
 
 function s(val, scale) {
