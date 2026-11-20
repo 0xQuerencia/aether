@@ -304,7 +304,7 @@
     "mode": "0o644"
   },
   "payload/shell/Scaler.qml": {
-    "sha256": "f52712c9688f4019c1944257e0fa4353d69d6dbd73982c9ace4b55cad167e20e",
+    "sha256": "337777a8ccb8dbf48358658f4ad92db9c0f2e2345cbd9831ffcf9302e7567419",
     "mode": "0o644"
   },
   "payload/shell/ScreenPins.qml": {
@@ -344,7 +344,7 @@
     "mode": "0o644"
   },
   "payload/shell/WindowRegistry.js": {
-    "sha256": "0a9cadea7764abea26828dd29d96a437f14b68adad4b96c39a7bf41abc5647cf",
+    "sha256": "aa963529ce1d27e8941bbea474273eab31e10ea61ecf0f44557ed8083eedb3c9",
     "mode": "0o644"
   },
   "payload/shell/WorkspaceLogic.js": {

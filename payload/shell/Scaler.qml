@@ -26,8 +26,12 @@ Item {
                 try {
                     if (this.text && this.text.trim().length > 0 && this.text.trim() !== "{}") {
                         let parsed = JSON.parse(this.text);
-                        if (parsed.uiScale !== undefined && root.uiScale !== parsed.uiScale) {
-                            root.uiScale = parsed.uiScale;
+                        if (parsed.uiScale !== undefined) {
+                            const requested = Number(parsed.uiScale);
+                            if (Number.isFinite(requested)) {
+                                const safeScale = Math.max(0.8, Math.min(1.4, requested));
+                                if (root.uiScale !== safeScale) root.uiScale = safeScale;
+                            }
                         }
                     }
                 } catch (e) {}
