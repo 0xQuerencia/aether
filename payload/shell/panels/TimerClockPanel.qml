@@ -36,7 +36,8 @@ Item {
     transform:Translate{x:reveal.offset}
     PanelReveal{id:reveal;island:root.island;mode:"pomodoro";targetWidth:island.s(880);targetHeight:island.s(500)}
     onEnabledChanged:if(enabled){LiveActivities.error="";forceActiveFocus();}
-    function preset(value){hours.text=String(Math.floor(value/3600));minutes.text=String(Math.floor(value/60)%60);seconds.text=String(value%60);}
+    Keys.onEscapePressed:event=>{root.island.closeActivePanel();event.accepted=true;}
+    function preset(value,label){hours.text=String(Math.floor(value/3600));minutes.text=String(Math.floor(value/60)%60);seconds.text=String(value%60);if(label!==undefined)name.text=label;}
     function start(){if(!valid || LiveActivities.busy)return;if(LiveActivities.add(duration,name.text))awaitingAdd=true;}
     function primaryAction(){if(!active){start();return;}LiveActivities.act(done?"restart":paused?"resume":"pause",selected.id);}
     Connections{target:LiveActivities;function onCommandFinished(success){if(root.awaitingAdd){root.awaitingAdd=false;if(success)root.composing=false;}}}
@@ -92,13 +93,25 @@ Item {
             Label{text:"m";font.pixelSize:11;color:root.island.mocha.overlay0}
             TimeField{id:seconds;text:"0";Accessible.name:"Timer seconds";validator:IntValidator{bottom:0;top:59}}
             Label{text:"s";font.pixelSize:11;color:root.island.mocha.overlay0}
-            AetherField{id:name;colors:root.island.mocha;uiScale:root.island.s(1);Layout.preferredWidth:root.island.s(170);placeholderText:"Timer name";Accessible.name:"Timer name";maximumLength:48;onAccepted:root.start()}
+            AetherField{id:name;colors:root.island.mocha;uiScale:root.island.s(1);Layout.preferredWidth:root.island.s(170);placeholderText:"Timer name";text:"Focus";Accessible.name:"Timer name";maximumLength:48;onAccepted:root.start()}
             Action{id:primary;primary:true;text:root.awaitingAdd?"Starting…":"Start timer";enabled:!LiveActivities.busy && root.valid;onClicked:root.start()}
         }
         RowLayout {
             Layout.alignment:Qt.AlignHCenter;spacing:root.island.s(8)
             Action{visible:root.clockMode;text:root.showSeconds?"Hide seconds":"Show seconds";primary:root.showSeconds;onClicked:root.showSeconds=!root.showSeconds}
-            Repeater{model:!root.clockMode && !root.active?[5,15,30]:[];delegate:Action{required property int modelData;text:modelData+" min";primary:root.duration===modelData*60;onClicked:root.preset(modelData*60)}}
+            Repeater {
+                model: !root.clockMode && !root.active ? [
+                    {minutes:25,label:"Focus",title:"Focus · 25 min"},
+                    {minutes:5,label:"Short break",title:"Break · 5 min"},
+                    {minutes:15,label:"Long break",title:"Long break · 15 min"}
+                ] : []
+                delegate:Action {
+                    required property var modelData
+                    text:modelData.title
+                    primary:root.duration===modelData.minutes*60 && name.text===modelData.label
+                    onClicked:root.preset(modelData.minutes*60,modelData.label)
+                }
+            }
             Action{id:secondary;visible:!root.clockMode && root.active;primary:true;text:root.done?"Start again":root.paused?"Resume":"Pause";enabled:!LiveActivities.busy;onClicked:root.primaryAction()}
             Action{visible:!root.clockMode && root.active;text:root.done?"Done":"Cancel";enabled:!LiveActivities.busy;onClicked:LiveActivities.act(root.done?"dismiss":"cancel",root.selected.id)}
             Action{visible:!root.clockMode && root.active;text:"New timer";onClicked:root.composing=true}
