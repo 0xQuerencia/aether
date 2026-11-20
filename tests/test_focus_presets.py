@@ -11,7 +11,8 @@ class FocusPresetTests(unittest.TestCase):
         cls.source = (ROOT / "payload/shell/panels/TimerClockPanel.qml").read_text()
 
     def test_focus_break_durations(self):
-        for value in ("{minutes:25,label:\"Focus\"", "{minutes:5,label:\"Short break\"", "{minutes:15,label:\"Long break\""}):
+        values = ('{minutes:25,label:"Focus"', '{minutes:5,label:"Short break"', '{minutes:15,label:"Long break"')
+        for value in values:
             self.assertIn(value, self.source)
 
     def test_presets_reuse_live_timer_backend(self):
